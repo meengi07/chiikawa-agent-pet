@@ -18,10 +18,17 @@ actor UsageClient: UsageFetching {
 
     func fetch(_ provider: UsageProvider, allowKeychainPrompt: Bool) async throws -> UsageReading {
         let request: URLRequest
+        var claudeOrganization: String?
         switch provider {
         case .claude:
-            let token = try claudeToken(allowKeychainPrompt: allowKeychainPrompt)
-            request = makeRequest(url: "https://api.anthropic.com/api/oauth/usage", token: token)
+            let access = try claudeAccess(allowKeychainPrompt: allowKeychainPrompt)
+            // claude-swap polls this endpoint for every account and spends the same hourly budget,
+            // so a direct request mostly gets 429 while it runs. Reuse its recent reading instead.
+            if let organization = access.organizationUUID {
+                if let cached = swapCachedReading(organizationUUID: organization, maxAge: Self.swapFreshAge) { return cached }
+                claudeOrganization = organization
+            }
+            request = makeRequest(url: "https://api.anthropic.com/api/oauth/usage", token: access.token)
         case .codex:
             let tokens = try codexTokens(allowKeychainPrompt: allowKeychainPrompt)
             var codexRequest = makeRequest(url: "https://chatgpt.com/backend-api/wham/usage", token: tokens.accessToken)
@@ -35,6 +42,10 @@ actor UsageClient: UsageFetching {
         switch response.statusCode {
         case 200...299: break
         case 401, 403: throw UsageFailure.unauthorized(provider)
+        case 429:
+            if let claudeOrganization,
+               let cached = swapCachedReading(organizationUUID: claudeOrganization, maxAge: Self.swapStaleAge) { return cached }
+            throw UsageFailure.http(response.statusCode)
         default: throw UsageFailure.http(response.statusCode)
         }
         let now = Date()
@@ -74,22 +85,28 @@ actor UsageClient: UsageFetching {
         }
     }
 
-    private func claudeToken(allowKeychainPrompt: Bool) throws -> String {
+    private func claudeAccess(allowKeychainPrompt: Bool) throws -> ClaudeAccess {
         let directory = configDirectory(variable: "CLAUDE_CONFIG_DIR", defaultName: ".claude")
         let path = directory.appendingPathComponent(".credentials.json")
-        if let data = try credentialFile(path), let token = try Self.parseClaudeCredential(data) {
-            return token
+        if let data = try credentialFile(path), let access = try Self.parseClaudeCredential(data) {
+            return access
         }
         let defaultDirectory = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude", isDirectory: true)
         guard directory.resolvingSymlinksInPath().standardizedFileURL == defaultDirectory.resolvingSymlinksInPath().standardizedFileURL else {
             throw UsageFailure.loginRequired(.claude)
         }
+        // Claude Code writes this item through /usr/bin/security, so only that tool is on its ACL.
+        // Reading through the same tool avoids the prompt, and keeps working after the item is rewritten.
+        if let data = Self.securityToolCredential(service: "Claude Code-credentials"),
+           let access = try Self.parseClaudeCredential(data) {
+            return access
+        }
         let data = try keychainCredential(service: "Claude Code-credentials", account: nil, allowPrompt: allowKeychainPrompt)
-        if let data, let token = try Self.parseClaudeCredential(data) { return token }
+        if let data, let access = try Self.parseClaudeCredential(data) { return access }
         throw UsageFailure.loginRequired(.claude)
     }
 
-    private static func parseClaudeCredential(_ data: Data) throws -> String? {
+    private static func parseClaudeCredential(_ data: Data) throws -> ClaudeAccess? {
         let credentials: ClaudeCredentials
         do { credentials = try JSONDecoder().decode(ClaudeCredentials.self, from: data) }
         catch { throw UsageFailure.loginRequired(.claude) }
@@ -97,7 +114,40 @@ actor UsageClient: UsageFetching {
         if let expiresAt = oauth.expiresAt, (!expiresAt.isFinite || expiresAt <= Date().timeIntervalSince1970 * 1_000) {
             throw UsageFailure.unauthorized(.claude)
         }
-        return token
+        return ClaudeAccess(token: token, organizationUUID: credentials.organizationUuid)
+    }
+
+    static let swapFreshAge: TimeInterval = 15 * 60
+    static let swapStaleAge: TimeInterval = 60 * 60
+
+    private func swapCachedReading(organizationUUID: String, maxAge: TimeInterval) -> UsageReading? {
+        let path = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".claude-swap-backup/cache/usage.json")
+        guard let data = try? credentialFile(path) else { return nil }
+        return Self.decodeSwapCache(data, organizationUUID: organizationUUID, now: Date(), maxAge: maxAge)
+    }
+
+    // claude-swap's cache/usage.json (schemaVersion 2) keeps the last good reading per account.
+    nonisolated static func decodeSwapCache(_ data: Data, organizationUUID: String, now: Date, maxAge: TimeInterval) -> UsageReading? {
+        guard let cache = try? JSONDecoder().decode(SwapUsageCache.self, from: data), cache.schemaVersion == 2 else { return nil }
+        let candidates = cache.accounts.values.filter { $0.organizationUuid == organizationUUID && $0.lastGood != nil }
+        guard let account = candidates.max(by: { ($0.fetchedAt ?? 0) < ($1.fetchedAt ?? 0) }),
+              let fetchedAt = account.fetchedAt, let usage = account.lastGood else { return nil }
+        let fetchedDate = Date(timeIntervalSince1970: fetchedAt)
+        let age = now.timeIntervalSince(fetchedDate)
+        guard age >= -60, age <= maxAge else { return nil }
+        var measured: [(String, SwapUsageWindow?)] = [("5시간", usage.fiveHour), ("주간", usage.sevenDay)]
+        for scoped in usage.scoped ?? [] {
+            if let name = scoped.name, !name.isEmpty { measured.append(("\(name) 주간", scoped)) }
+        }
+        var windows: [QuotaWindow] = []
+        for (title, window) in measured {
+            guard let window, let used = window.pct,
+                  let quota = try? QuotaWindow(title: title, usedPercent: used, resetsAt: try? parseReset(window.resetsAt)) else { continue }
+            windows.append(quota)
+        }
+        guard !windows.isEmpty else { return nil }
+        return UsageReading(provider: .claude, windows: windows, fetchedAt: fetchedDate)
     }
 
     private func codexTokens(allowKeychainPrompt: Bool) throws -> CodexAccess {
@@ -133,6 +183,21 @@ actor UsageClient: UsageFetching {
 
     private static func validHeader(_ text: String) -> Bool {
         !text.isEmpty && text.unicodeScalars.allSatisfy { $0.value >= 33 && $0.value <= 126 }
+    }
+
+    private static func securityToolCredential(service: String) -> Data? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["find-generic-password", "-s", service, "-w"]
+        let output = Pipe()
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return nil }
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { return nil }
+        let trimmed = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : Data(trimmed.utf8)
     }
 
     private func keychainCredential(service: String, account: String?, allowPrompt: Bool) throws -> Data? {
@@ -231,6 +296,7 @@ actor UsageClient: UsageFetching {
 
 private struct ClaudeCredentials: Decodable {
     let claudeAiOauth: OAuth?
+    let organizationUuid: String?
     struct OAuth: Decodable {
         let accessToken: String?
         let expiresAt: Double?
@@ -253,6 +319,43 @@ private struct CodexCredentials: Decodable {
             case accessToken = "access_token"
             case accountID = "account_id"
         }
+    }
+}
+
+private struct ClaudeAccess {
+    let token: String
+    let organizationUUID: String?
+}
+
+private struct SwapUsageCache: Decodable {
+    let schemaVersion: Int?
+    let accounts: [String: SwapAccount]
+}
+
+private struct SwapAccount: Decodable {
+    let organizationUuid: String?
+    let fetchedAt: Double?
+    let lastGood: SwapUsage?
+}
+
+private struct SwapUsage: Decodable {
+    let fiveHour: SwapUsageWindow?
+    let sevenDay: SwapUsageWindow?
+    let scoped: [SwapUsageWindow]?
+    enum CodingKeys: String, CodingKey {
+        case fiveHour = "five_hour"
+        case sevenDay = "seven_day"
+        case scoped
+    }
+}
+
+private struct SwapUsageWindow: Decodable {
+    let name: String?
+    let pct: Double?
+    let resetsAt: String?
+    enum CodingKeys: String, CodingKey {
+        case name, pct
+        case resetsAt = "resets_at"
     }
 }
 

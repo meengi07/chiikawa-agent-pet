@@ -48,6 +48,23 @@ struct UsageTests {
         #expect(throws: UsageFailure.self) { try UsageClient.decodeClaude(Data(json.utf8), now: now) }
     }
 
+    private let swapCache = #"{"schemaVersion":2,"accounts":{"1":{"organizationUuid":"org-a","fetchedAt":1779999500,"lastGood":{"five_hour":{"pct":8.0,"resets_at":"2026-05-28T09:30:00.262955+00:00"},"seven_day":{"pct":57.0},"scoped":[{"name":"Fable","pct":44.0}]}},"2":{"organizationUuid":"org-b","fetchedAt":1779999900,"lastGood":{"five_hour":{"pct":1.0}}}}}"#
+
+    @Test func swapCacheReadingForMatchingOrganization() throws {
+        let reading = try #require(UsageClient.decodeSwapCache(Data(swapCache.utf8), organizationUUID: "org-a", now: now, maxAge: 900))
+        #expect(reading.windows.map(\.title) == ["5시간", "주간", "Fable 주간"])
+        #expect(reading.remainingPercent == 43)
+        #expect(reading.fetchedAt == Date(timeIntervalSince1970: 1_779_999_500))
+        let reset = try #require(reading.windows[0].resetsAt)
+        #expect(abs(reset.timeIntervalSince1970 - 1_779_960_600.263) < 0.001)
+    }
+
+    @Test func swapCacheIgnoresStaleOrUnknownAccounts() {
+        #expect(UsageClient.decodeSwapCache(Data(swapCache.utf8), organizationUUID: "org-a", now: now, maxAge: 300) == nil)
+        #expect(UsageClient.decodeSwapCache(Data(swapCache.utf8), organizationUUID: "org-c", now: now, maxAge: 900) == nil)
+        #expect(UsageClient.decodeSwapCache(Data(#"{"accounts":{}}"#.utf8), organizationUUID: "org-a", now: now, maxAge: 900) == nil)
+    }
+
     @Test func codexWeeklyPrimaryAndReorderedWindows() throws {
         let data = Data(#"{"rate_limit":{"primary_window":{"used_percent":1,"limit_window_seconds":604800,"reset_at":1785260773},"secondary_window":null}}"#.utf8)
         let weekly = try UsageClient.decodeCodex(data, now: now)
