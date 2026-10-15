@@ -37,15 +37,15 @@ macOS와 Windows에서 화면 위에 떠다니는 비공식 도트 펫입니다.
 
 ## 설치
 
-버전별 배포 파일은 [GitHub Releases](https://github.com/meengi07/chiikawa-agent-pet/releases)에서 확인합니다.
-mac과 Windows 릴리즈는 독립적으로 관리합니다. 현재 배포 버전은 mac `1.1.1`, Windows `1.1.0`입니다.
+macOS와 Windows 배포 파일은 하나의 [v1.1.2 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2)에서 받습니다.
+두 OS 모두 공통 버전 `1.1.2`를 사용하며, 릴리즈의 단일 `SHA256SUMS`에 아래 네 파일의 체크섬을 담습니다.
 
 | 플랫폼 | 배포 파일 | 설치 방법 |
 |---|---|---|
-| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.1.1-mac-arm64.dmg` | DMG를 열고 앱을 응용 프로그램 폴더로 옮깁니다. |
-| macOS 14 이상, Intel | `ChiikawaPet-1.1.1-mac-x86_64.dmg` | DMG를 열고 앱을 응용 프로그램 폴더로 옮깁니다. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64-setup.exe` | 설치 프로그램을 실행한 뒤 시작 메뉴에서 Chiikawa Pet을 엽니다. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64.zip` | **모든 파일을 압축 해제**한 뒤 `ChiikawaPet.exe`를 실행합니다. |
+| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.1.2-mac-arm64.dmg` | DMG를 열고 앱을 `/Applications`로 옮깁니다. |
+| macOS 14 이상, Intel | `ChiikawaPet-1.1.2-mac-x86_64.dmg` | DMG를 열고 앱을 `/Applications`로 옮깁니다. |
+| Windows 10/11, x64 | `ChiikawaPet-1.1.2-win-x64-setup.exe` | 설치 프로그램을 실행한 뒤 시작 메뉴에서 Chiikawa Pet을 엽니다. |
+| Windows 10/11, x64 | `ChiikawaPet-1.1.2-win-x64.zip` | **모든 파일을 압축 해제**한 뒤 `ChiikawaPet.exe`를 실행합니다. |
 
 Windows 배포본에는 .NET이 포함됩니다. 설치 프로그램은 현재 사용자의
 `%LOCALAPPDATA%\Programs\ChiikawaPet`에 설치하고 앱 제거 항목을 추가합니다.
@@ -164,7 +164,7 @@ windows/     C# 소스·로직 검사·설치 프로그램 정의
 assets/      공용 스프라이트와 서비스 로고
 scripts/     빌드·검사·패키징·릴리즈 검증
 docs/        릴리즈 안내와 변경 사항
-mac/VERSION · windows/VERSION  OS별 MAJOR.MINOR.PATCH 버전
+VERSION      두 OS의 공통 MAJOR.MINOR.PATCH 버전
 ```
 
 OS별 코드는 분리하고 두 앱 모두 `assets/`의 같은 PNG를 포함합니다.
@@ -184,10 +184,12 @@ open -n /Applications/ChiikawaPet.app --args --preview 10 --show-usage
 
 ## 릴리즈와 버전 관리
 
-[mac/VERSION](mac/VERSION)과 [windows/VERSION](windows/VERSION)을 각각 기준으로 앱 버전과 배포 파일 이름을 맞춥니다.
+루트 [VERSION](VERSION) 하나를 기준으로 두 앱의 버전과 배포 파일 이름을 맞춥니다.
 [릴리즈 안내](docs/RELEASING.ko.md)와 [변경 기록](CHANGELOG.md)을 확인하세요.
-`mac-vMAJOR.MINOR.PATCH`, `windows-vMAJOR.MINOR.PATCH` 태그에 맞춰 자동화가 배포 파일을 빌드하고 GitHub Release **초안**을 만듭니다.
-초안 게시 여부는 별도로 결정합니다.
+공통 [.github/workflows/release.yml](.github/workflows/release.yml)이 `vMAJOR.MINOR.PATCH`
+태그로 두 OS를 빌드합니다. 두 OS 작업이 모두 성공해야 네 배포 파일과 단일
+`SHA256SUMS`를 담은 GitHub Release **초안**을 만듭니다.
+배포 파일을 직접 검토한 뒤 초안 게시 여부를 결정합니다.
 
 ## 개인정보와 알려진 제한 사항
 

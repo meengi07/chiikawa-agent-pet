@@ -6,9 +6,11 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 
 ## 설치
 
-`ChiikawaPet-1.1.0-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
+공통 [v1.1.2 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2)에서 배포 파일을 받습니다.
+단일 `SHA256SUMS`에 두 Windows 배포 파일과 두 macOS DMG의 체크섬을 함께 담습니다.
+`ChiikawaPet-1.1.2-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
 시작 메뉴 바로가기와 앱 제거 항목을 추가합니다. 관리자 권한은 필요하지 않습니다.
-포터블 버전은 `ChiikawaPet-1.1.0-win-x64.zip`을 **모두 압축 해제**한 뒤
+포터블 버전은 `ChiikawaPet-1.1.2-win-x64.zip`을 **모두 압축 해제**한 뒤
 `ChiikawaPet.exe`를 실행합니다. 두 배포본에는 .NET이 포함됩니다.
 포터블 EXE를 DLL 등 다른 파일과 분리하지 마세요. 현재 공인 코드 서명은 없습니다.
 
@@ -56,7 +58,8 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
 ```
 
-로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.1.0`에 ZIP을 만듭니다.
+루트 [VERSION](../VERSION)을 Windows와 macOS의 공통 버전으로 사용합니다.
+로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.1.2`에 ZIP을 만듭니다.
 ARM64 포터블 빌드는 `-Runtime win-arm64`를 추가하세요. x64 설치 프로그램은
 NSIS를 설치한 뒤 다음 명령으로 만듭니다.
 

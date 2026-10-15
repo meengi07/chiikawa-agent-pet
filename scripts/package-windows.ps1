@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
 & "$PSScriptRoot/build-windows.ps1" -Runtime win-x64
-$Version = (Get-Content "$ProjectRoot/windows/VERSION" -Raw).Trim()
+$Version = (Get-Content "$ProjectRoot/VERSION" -Raw).Trim()
 $Payload = Join-Path $ProjectRoot 'build/windows/win-x64'
 $Output = Join-Path $ProjectRoot "build/release/windows/$Version/ChiikawaPet-$Version-win-x64-setup.exe"
 $Compiler = Get-Command makensis -ErrorAction SilentlyContinue

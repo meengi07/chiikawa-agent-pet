@@ -13,7 +13,7 @@ let package = Package(
             exclude: [
                 "build", "mac/Tests", "mac/Resources", "mac/README.md", "mac/README.ko.md",
                 "windows", "scripts", "docs",
-                "README.md", "README.ko.md", "CHANGELOG.md", "LICENSE", "mac/VERSION", "Launch.command",
+                "README.md", "README.ko.md", "CHANGELOG.md", "LICENSE", "VERSION", "Launch.command",
                 "assets/NOTICE.md"
             ].filter {
                 FileManager.default.fileExists(atPath: URL(fileURLWithPath: #filePath)

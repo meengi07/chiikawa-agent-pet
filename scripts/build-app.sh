@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 BUILD_ARCH="${1:-$(uname -m)}"
 case "$BUILD_ARCH" in arm64|x86_64) ;; *) printf 'Unsupported architecture: %s\n' "$BUILD_ARCH" >&2; exit 64 ;; esac
-APP_VERSION="$(tr -d '\r\n' < mac/VERSION)"
+APP_VERSION="$(tr -d '\r\n' < VERSION)"
 if ! [[ "$APP_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
     printf 'VERSION must contain MAJOR.MINOR.PATCH\n' >&2
     exit 64

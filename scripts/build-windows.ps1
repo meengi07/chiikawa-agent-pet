@@ -1,7 +1,7 @@
 param([ValidateSet('win-x64', 'win-arm64')][string]$Runtime = 'win-x64')
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-$Version = (Get-Content "$ProjectRoot/windows/VERSION" -Raw).Trim()
+$Version = (Get-Content "$ProjectRoot/VERSION" -Raw).Trim()
 if ($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
     throw 'VERSION must contain MAJOR.MINOR.PATCH.'
 }
@@ -15,7 +15,7 @@ Copy-Item "$ProjectRoot/windows/README.md" "$Destination/README.md" -Force
 Copy-Item "$ProjectRoot/windows/README.ko.md" "$Destination/README.ko.md" -Force
 Copy-Item "$ProjectRoot/LICENSE" "$Destination/LICENSE" -Force
 Copy-Item "$ProjectRoot/assets/NOTICE.md" "$Destination/ARTWORK-NOTICE.md" -Force
-Copy-Item "$ProjectRoot/windows/VERSION" "$Destination/VERSION" -Force
+Copy-Item "$ProjectRoot/VERSION" "$Destination/VERSION" -Force
 $ReleaseDirectory = Join-Path $ProjectRoot "build/release/windows/$Version"
 New-Item -ItemType Directory -Path $ReleaseDirectory -Force | Out-Null
 $Archive = Join-Path $ReleaseDirectory "ChiikawaPet-$Version-$Runtime.zip"

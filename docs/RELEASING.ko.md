@@ -2,19 +2,26 @@
 
 [English](RELEASING.md) | [한국어](RELEASING.ko.md)
 
-mac과 Windows 버전 및 GitHub Release를 독립적으로 관리합니다.
+macOS와 Windows는 하나의 버전·태그·GitHub Release를 함께 사용합니다.
 
-| 플랫폼 | 버전 파일 | 태그 | Workflow | 배포 경로 |
-|---|---|---|---|---|
-| mac | `mac/VERSION` | `mac-v1.1.1` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.1.1/` |
-| Windows | `windows/VERSION` | `windows-v1.1.0` | [release-windows.yml](../.github/workflows/release-windows.yml) | `build/release/windows/1.1.0/` |
+| 항목 | 값 |
+|---|---|
+| 버전 기준 | 루트 [VERSION](../VERSION), 현재 `1.1.2` |
+| 태그 | `vMAJOR.MINOR.PATCH`, 현재 `v1.1.2` |
+| Workflow | [release.yml](../.github/workflows/release.yml) |
+| 릴리즈 노트 | [releases/v1.1.2.md](releases/v1.1.2.md)에 영어·한국어 함께 작성 |
+| macOS 빌드 경로 | `build/release/mac/1.1.2/` |
+| Windows 빌드 경로 | `build/release/windows/1.1.2/` |
+| CI 통합 배포 경로 | `release/`에 네 배포 파일과 단일 `SHA256SUMS` |
 
 ## 버전 관리
 
-해당 OS의 버전 파일을 `MAJOR.MINOR.PATCH`로 관리합니다.
-`docs/releases/<플랫폼>-v<버전>.md`에 릴리즈 노트를 추가하고 `CHANGELOG.md`와
-영어·한국어 README를 갱신하세요. 한 OS를 배포할 때 다른 OS 버전은 올릴 필요가 없습니다.
-mac은 Info.plist에 버전을 넣고 Windows 프로젝트는 어셈블리·파일 버전으로 읽습니다.
+루트 `VERSION` 하나에만 `MAJOR.MINOR.PATCH`를 기록합니다.
+두 OS가 이 파일을 읽어 앱 메타데이터와 배포 파일 이름에 같은 버전을 사용합니다.
+`docs/releases/v<버전>.md`에 릴리즈 노트를 추가하고 `CHANGELOG.md`와
+영어·한국어 README를 갱신하세요. 태그 버전은 `VERSION`과 일치해야 합니다.
+
+이미 게시한 OS별 태그와 과거 릴리즈 노트는 변경하지 않습니다.
 
 ## 패키징
 
@@ -30,12 +37,29 @@ python3 scripts/check-release.py mac
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.0\ChiikawaPet-1.1.0-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.2\ChiikawaPet-1.1.2-win-x64-setup.exe
 python scripts/check-release.py windows
 ```
 
-각 OS의 릴리즈에 독립된 `SHA256SUMS`를 만듭니다. 배포본에 영한 문서,
-MIT 코드 라이선스, 별도 이미지 안내를 넣고 Windows에는 .NET 라이선스도 포함합니다.
+OS별 검사는 각 빌드 경로의 파일을 확인합니다. 릴리즈를 만들 때는 아래 네 파일을
+`release/`에 모은 뒤 저장소 루트에서 통합 검사를 실행합니다.
+
+| 플랫폼 | 파일 |
+|---|---|
+| macOS, Apple Silicon | `ChiikawaPet-1.1.2-mac-arm64.dmg` |
+| macOS, Intel | `ChiikawaPet-1.1.2-mac-x86_64.dmg` |
+| Windows, x64 설치 프로그램 | `ChiikawaPet-1.1.2-win-x64-setup.exe` |
+| Windows, x64 포터블 | `ChiikawaPet-1.1.2-win-x64.zip` |
+
+```sh
+python3 scripts/check-release.py all release
+```
+
+네 파일을 모두 검사하고 `release/SHA256SUMS`를 만듭니다.
+[v1.1.2 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2)에는
+OS별 검사 결과가 아니라 이 단일 통합 체크섬 파일과 네 배포 파일을 함께 올립니다.
+배포본에 영한 문서, MIT 코드 라이선스, 별도 이미지 안내를 넣고
+Windows에는 .NET 라이선스도 포함합니다.
 
 mac 배포 전에는 CI에서 만든 DMG를 마운트하고 앱을 `/Applications`에 설치한 뒤
 사용량 패널을 여세요. 선택한 펫·캐릭터 목록·언어 선택·서비스 로고를 확인합니다.
@@ -43,22 +67,26 @@ mac 배포 전에는 CI에서 만든 DMG를 마운트하고 앱을 `/Application
 
 ## GitHub workflow
 
-수동 실행은 선택한 OS의 검토용 파일을 빌드합니다. 플랫폼 태그를 푸시하면 해당 OS의
-검사·패키징만 실행하고 릴리즈 초안을 만듭니다. 태그 버전은 해당 버전 파일과 일치해야 합니다.
-결과와 파일을 확인한 뒤 초안을 게시하세요.
+단일 `release.yml`이 두 OS를 빌드하고 검사합니다. `vMAJOR.MINOR.PATCH` 태그로
+실행하면 **두 OS 작업이 모두 성공한 뒤에만** 파일을 모아 통합 패키지·체크섬 검사를
+거쳐 하나의 GitHub Release **초안**을 만듭니다.
+한 OS가 실패하면 일부 파일만 담은 릴리즈를 만들지 않습니다.
+
+배포 파일·체크섬·통합 릴리즈 노트를 직접 검토한 뒤 초안 게시 여부를 결정하세요.
+초안 생성은 자동 게시가 아닙니다.
 
 ```sh
-git tag -a mac-v1.1.1 -m 'Chiikawa Agent Pet mac v1.1.1'
+git tag -a v1.1.2 -m 'Chiikawa Agent Pet v1.1.2'
 git push origin main
-git push origin mac-v1.1.1
+git push origin v1.1.2
 ```
 
-```sh
-git tag -a windows-v1.1.0 -m 'Chiikawa Agent Pet Windows v1.1.0'
-git push origin main
-git push origin windows-v1.1.0
-```
+Private 저장소의 릴리즈는 계속 비공개입니다. mac 앱은 ad-hoc 서명이며
+Apple Developer ID 서명·공증은 없습니다. Windows 공인 코드 서명도 없습니다.
+Windows CI는 설치·미리보기 시작·제거를 검사하지만 화면·혼합 DPI 정확성은 보장하지
+않습니다. 실제 화면·계정 조회·혼합 DPI는 Windows에서 직접 확인한 뒤에만
+검증 결과를 안내하세요.
 
-Private 저장소의 릴리즈는 계속 비공개입니다. 현재 Apple Developer ID 공증과
-Windows 공인 서명은 없습니다. Windows CI는 설치·미리보기 시작·제거를 검사하며,
-실제 화면·계정 조회·혼합 DPI는 직접 확인해야 합니다.
+macOS 27 + Hidden Bar 1.11.1에서는 정확히 `/Applications/ChiikawaPet.app`을
+실행해야 합니다. DMG 내부, `build/`, 다운로드 폴더, `~/Applications`에서 실행하면
+표시 영역에 배치해도 숨겨질 수 있습니다.

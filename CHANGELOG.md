@@ -1,7 +1,16 @@
 # Changelog
 
-mac and Windows are versioned independently through [mac/VERSION](mac/VERSION)
-and [windows/VERSION](windows/VERSION).
+macOS and Windows share the root [VERSION](VERSION) and one `vMAJOR.MINOR.PATCH`
+GitHub Release. Published platform-specific history below remains unchanged.
+
+## 1.1.2 — 2026-10-15
+
+- Unify macOS and Windows on version 1.1.2, one `v1.1.2` tag, and one release workflow.
+- Publish both macOS DMGs, the Windows installer, and the Windows portable ZIP together with one combined `SHA256SUMS`.
+- Include Momonga, six expressions, blink animation, saved character selection, and English/Korean UI from the preceding platform releases.
+- Include the macOS packaged sprite/logo resource-loading fix and clean app-bundle updates that remove obsolete files while preserving preferences.
+- Keep the `/Applications/ChiikawaPet.app` installation requirement for Hidden Bar 1.11.1 on macOS 27.
+- Apple Developer ID signing/notarization and Windows code signing remain unavailable; Windows visual and mixed-DPI behavior still require manual verification.
 
 ## mac 1.1.1 — 2026-10-15
 

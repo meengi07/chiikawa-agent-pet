@@ -1,7 +1,7 @@
 param([Parameter(Mandatory = $true)][string]$Installer)
 $ErrorActionPreference = 'Stop'
 $ProjectRoot = Split-Path $PSScriptRoot -Parent
-$Version = (Get-Content "$ProjectRoot/windows/VERSION" -Raw).Trim()
+$Version = (Get-Content "$ProjectRoot/VERSION" -Raw).Trim()
 $InstallDirectory = Join-Path $env:LOCALAPPDATA 'Programs/ChiikawaPet'
 $RegistryKey = 'HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall/ChiikawaPet'
 if (Test-Path $InstallDirectory) { throw 'Run this installer check on a clean Windows machine or CI runner.' }

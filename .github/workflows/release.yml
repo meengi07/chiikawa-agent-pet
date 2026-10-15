@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check shared version
+        id: version
+        shell: bash
+        run: |
+          version=$(tr -d '\r\n' < VERSION)
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then test "$GITHUB_REF_NAME" = "v$version"; fi
+      - run: ./scripts/test.sh
+      - run: ./scripts/package-mac.sh '${{ matrix.arch }}'
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-mac-${{ matrix.arch }}
+          path: build/release/mac/${{ steps.version.outputs.value }}/
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check shared version
+        id: version
+        shell: bash
+        run: |
+          version=$(tr -d '\r\n' < VERSION)
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then test "$GITHUB_REF_NAME" = "v$version"; fi
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.x'
+      - run: choco install nsis --yes --no-progress
+      - run: ./scripts/package-windows.ps1
+      - name: Check Windows installation
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          ./scripts/test-installed-windows.ps1 -Installer "./build/release/windows/$version/ChiikawaPet-$version-win-x64-setup.exe"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-windows-x64
+          path: build/release/windows/${{ steps.version.outputs.value }}/
+          if-no-files-found: error
+
+  draft-release:
+    if: github.ref_type == 'tag'
+    needs: [mac, windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release
+      - run: python3 scripts/check-release.py all release
+      - name: Create unified draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(tr -d '\r\n' < VERSION)
+          gh release create "$GITHUB_REF_NAME" release/* --draft --verify-tag \
+            --title "Chiikawa Agent Pet v$version" --notes-file "docs/releases/v$version.md"

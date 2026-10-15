@@ -37,15 +37,15 @@ still experimental; see [known limitations](#privacy-and-known-limitations).
 
 ## Installation
 
-Find versioned packages on [GitHub Releases](https://github.com/meengi07/chiikawa-agent-pet/releases).
-Mac and Windows releases are versioned independently. Current package versions are mac `1.1.1` and Windows `1.1.0`.
+Download macOS and Windows packages from the same [v1.1.2 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2).
+Both platforms use the shared version `1.1.2`; the release's single `SHA256SUMS` covers all four packages below.
 
 | Platform | Package | Installation |
 |---|---|---|
-| macOS 14+, Apple Silicon | `ChiikawaPet-1.1.1-mac-arm64.dmg` | Open the DMG and drag the app to Applications. |
-| macOS 14+, Intel | `ChiikawaPet-1.1.1-mac-x86_64.dmg` | Open the DMG and drag the app to Applications. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64-setup.exe` | Run the installer, then open Chiikawa Pet from the Start menu. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
+| macOS 14+, Apple Silicon | `ChiikawaPet-1.1.2-mac-arm64.dmg` | Open the DMG and drag the app to `/Applications`. |
+| macOS 14+, Intel | `ChiikawaPet-1.1.2-mac-x86_64.dmg` | Open the DMG and drag the app to `/Applications`. |
+| Windows 10/11, x64 | `ChiikawaPet-1.1.2-win-x64-setup.exe` | Run the installer, then open Chiikawa Pet from the Start menu. |
+| Windows 10/11, x64 | `ChiikawaPet-1.1.2-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
 
 The Windows packages include .NET. The installer uses the current user's
 `%LOCALAPPDATA%\Programs\ChiikawaPet` directory and adds an uninstall entry.
@@ -169,7 +169,7 @@ windows/     C# sources, logic checks, and installer definition
 assets/      Shared sprite sheets and provider logos
 scripts/     Build, test, packaging, and release checks
 docs/        Release guide and release notes
-mac/VERSION · windows/VERSION  Independent MAJOR.MINOR.PATCH versions
+VERSION      Shared MAJOR.MINOR.PATCH version for both platforms
 ```
 
 Platform code stays separate. Both applications embed the same PNG files from
@@ -190,9 +190,11 @@ open -n /Applications/ChiikawaPet.app --args --preview 10 --show-usage
 
 ## Releases and versioning
 
-[mac/VERSION](mac/VERSION) and [windows/VERSION](windows/VERSION) independently control application versions and package filenames. See the [release guide](docs/RELEASING.md) and [changelog](CHANGELOG.md).
-Each platform workflow builds its own packages and creates a **draft** GitHub
-Release for matching `mac-vMAJOR.MINOR.PATCH` or `windows-vMAJOR.MINOR.PATCH` tags. Publishing the draft is a separate step.
+[VERSION](VERSION) is the sole version source for both applications and their package filenames. See the [release guide](docs/RELEASING.md) and [changelog](CHANGELOG.md).
+The shared [.github/workflows/release.yml](.github/workflows/release.yml) workflow
+builds both platforms for a `vMAJOR.MINOR.PATCH` tag. Both OS jobs must succeed
+before it creates one **draft** GitHub Release containing all four packages and
+one `SHA256SUMS`. Inspect the artifacts before deliberately publishing the draft.
 
 ## Privacy and known limitations
 
