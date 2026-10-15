@@ -68,7 +68,7 @@ Install Swift 6+ through Xcode or Command Line Tools, then run from the reposito
 `/Applications`, and launches that copy. The build and packaging scripts alone
 do not install it.
 
-Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.0.0/`.
+Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.1.0/`.
 Quit the running app before trying a preview, which performs no account requests:
 
 ```sh

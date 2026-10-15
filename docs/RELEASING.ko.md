@@ -6,8 +6,8 @@ mac과 Windows 버전 및 GitHub Release를 독립적으로 관리합니다.
 
 | 플랫폼 | 버전 파일 | 태그 | Workflow | 배포 경로 |
 |---|---|---|---|---|
-| mac | `mac/VERSION` | `mac-v1.0.0` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.0.0/` |
-| Windows | `windows/VERSION` | `windows-v1.0.0` | [release-windows.yml](../.github/workflows/release-windows.yml) | `build/release/windows/1.0.0/` |
+| mac | `mac/VERSION` | `mac-v1.1.0` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.1.0/` |
+| Windows | `windows/VERSION` | `windows-v1.1.0` | [release-windows.yml](../.github/workflows/release-windows.yml) | `build/release/windows/1.1.0/` |
 
 ## 버전 관리
 
@@ -30,7 +30,7 @@ python3 scripts/check-release.py mac
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.0.0\ChiikawaPet-1.0.0-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.0\ChiikawaPet-1.1.0-win-x64-setup.exe
 python scripts/check-release.py windows
 ```
 
@@ -44,15 +44,15 @@ MIT 코드 라이선스, 별도 이미지 안내를 넣고 Windows에는 .NET �
 결과와 파일을 확인한 뒤 초안을 게시하세요.
 
 ```sh
-git tag -a mac-v1.0.0 -m 'Chiikawa Agent Pet mac v1.0.0'
+git tag -a mac-v1.1.0 -m 'Chiikawa Agent Pet mac v1.1.0'
 git push origin main
-git push origin mac-v1.0.0
+git push origin mac-v1.1.0
 ```
 
 ```sh
-git tag -a windows-v1.0.0 -m 'Chiikawa Agent Pet Windows v1.0.0'
+git tag -a windows-v1.1.0 -m 'Chiikawa Agent Pet Windows v1.1.0'
 git push origin main
-git push origin windows-v1.0.0
+git push origin windows-v1.1.0
 ```
 
 Private 저장소의 릴리즈는 계속 비공개입니다. 현재 Apple Developer ID 공증과

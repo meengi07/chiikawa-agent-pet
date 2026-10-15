@@ -6,8 +6,8 @@ mac and Windows have independent versions and GitHub Releases.
 
 | Platform | Version file | Tag | Workflow | Output |
 |---|---|---|---|---|
-| mac | `mac/VERSION` | `mac-v1.0.0` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.0.0/` |
-| Windows | `windows/VERSION` | `windows-v1.0.0` | [release-windows.yml](../.github/workflows/release-windows.yml) | `build/release/windows/1.0.0/` |
+| mac | `mac/VERSION` | `mac-v1.1.0` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.1.0/` |
+| Windows | `windows/VERSION` | `windows-v1.1.0` | [release-windows.yml](../.github/workflows/release-windows.yml) | `build/release/windows/1.1.0/` |
 
 ## Versioning
 
@@ -31,7 +31,7 @@ python3 scripts/check-release.py mac
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.0.0\ChiikawaPet-1.0.0-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.0\ChiikawaPet-1.1.0-win-x64-setup.exe
 python scripts/check-release.py windows
 ```
 
@@ -47,15 +47,15 @@ The tag's version must match its platform version file. Review the results and
 assets, then publish the draft.
 
 ```sh
-git tag -a mac-v1.0.0 -m 'Chiikawa Agent Pet mac v1.0.0'
+git tag -a mac-v1.1.0 -m 'Chiikawa Agent Pet mac v1.1.0'
 git push origin main
-git push origin mac-v1.0.0
+git push origin mac-v1.1.0
 ```
 
 ```sh
-git tag -a windows-v1.0.0 -m 'Chiikawa Agent Pet Windows v1.0.0'
+git tag -a windows-v1.1.0 -m 'Chiikawa Agent Pet Windows v1.1.0'
 git push origin main
-git push origin windows-v1.0.0
+git push origin windows-v1.1.0
 ```
 
 Private repository releases remain private. Current packages have no Apple
