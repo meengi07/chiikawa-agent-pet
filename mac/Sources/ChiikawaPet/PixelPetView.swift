@@ -32,6 +32,13 @@ class PixelPetView: NSView {
     private static let spriteSize = CGSize(width: 64, height: 80)
     private static let shadow = CGColor(srgbRed: 0.39, green: 0.30, blue: 0.31, alpha: 0.12)
     private static let momongaRowEdges = [0, 400, 700, 1024]
+    static let resourceBundle: Bundle = {
+        if let url = Bundle.main.resourceURL?.appendingPathComponent("ChiikawaPet_ChiikawaPet.bundle"),
+           let bundle = Bundle(url: url) {
+            return bundle
+        }
+        return Bundle.module
+    }()
     static let frames: [PetCharacter: [CGImage]] = loadFrames()
     private static let menuBarImages: [PetCharacter: [NSImage]] = loadMenuBarImages()
 
@@ -95,7 +102,7 @@ class PixelPetView: NSView {
     private static func loadFrames() -> [PetCharacter: [CGImage]] {
         var sprites: [PetCharacter: [CGImage]] = [:]
         for character in PetCharacter.allCases {
-            guard let url = Bundle.module.url(forResource: character.rawValue, withExtension: "png"),
+            guard let url = resourceBundle.url(forResource: character.rawValue, withExtension: "png"),
                   let source = CGImageSourceCreateWithURL(url as CFURL, nil),
                   let atlas = CGImageSourceCreateImageAtIndex(source, 0, nil),
                   atlas.width >= 512, atlas.height >= 480,

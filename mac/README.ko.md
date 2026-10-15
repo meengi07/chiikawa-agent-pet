@@ -63,7 +63,7 @@ Xcode 또는 Command Line Tools로 Swift 6 이상을 설치한 뒤 저장소 루
 `Launch.command`는 빌드 후 실행 중인 펫을 종료하고 `/Applications`에 설치하거나
 업데이트한 뒤 해당 앱을 실행합니다. 빌드·패키징 스크립트만 실행하면 설치하지 않습니다.
 
-Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.1.0/`에 생성됩니다.
+Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.1.1/`에 생성됩니다.
 미리보기는 기존 앱을 종료한 뒤 실행하며 실제 사용량을 조회하지 않습니다.
 
 ```sh

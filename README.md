@@ -38,12 +38,12 @@ still experimental; see [known limitations](#privacy-and-known-limitations).
 ## Installation
 
 Find versioned packages on [GitHub Releases](https://github.com/meengi07/chiikawa-agent-pet/releases).
-Mac and Windows releases are versioned independently. The package names below are for `1.1.0` on both platforms.
+Mac and Windows releases are versioned independently. Current package versions are mac `1.1.1` and Windows `1.1.0`.
 
 | Platform | Package | Installation |
 |---|---|---|
-| macOS 14+, Apple Silicon | `ChiikawaPet-1.1.0-mac-arm64.dmg` | Open the DMG and drag the app to Applications. |
-| macOS 14+, Intel | `ChiikawaPet-1.1.0-mac-x86_64.dmg` | Open the DMG and drag the app to Applications. |
+| macOS 14+, Apple Silicon | `ChiikawaPet-1.1.1-mac-arm64.dmg` | Open the DMG and drag the app to Applications. |
+| macOS 14+, Intel | `ChiikawaPet-1.1.1-mac-x86_64.dmg` | Open the DMG and drag the app to Applications. |
 | Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64-setup.exe` | Run the installer, then open Chiikawa Pet from the Start menu. |
 | Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
 

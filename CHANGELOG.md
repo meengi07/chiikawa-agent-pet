@@ -3,11 +3,13 @@
 mac and Windows are versioned independently through [mac/VERSION](mac/VERSION)
 and [windows/VERSION](windows/VERSION).
 
-## mac 1.1.0 — 2026-10-15
+## mac 1.1.1 — 2026-10-15
 
 - Add Momonga with six expressions, blink animation, saved selection, and English/Korean names.
 - Add English (default) and Korean UI modes with saved language selection.
 - Fix macOS 27 / Hidden Bar 1.11.1 menu-bar hiding by installing and launching source builds from `/Applications` instead of the repository's `build/` directory; preserve the existing app preferences.
+- Resolve packaged sprites and provider logos from the app's resource directory before SwiftPM's command-line bundle fallback, fixing CI-built app startup.
+- Build fresh app bundles and remove obsolete installed files during source-launcher updates to preserve valid resource signatures.
 
 ## Windows 1.1.0 — 2026-10-15
 

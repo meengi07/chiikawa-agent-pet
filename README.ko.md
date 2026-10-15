@@ -38,12 +38,12 @@ macOS와 Windows에서 화면 위에 떠다니는 비공식 도트 펫입니다.
 ## 설치
 
 버전별 배포 파일은 [GitHub Releases](https://github.com/meengi07/chiikawa-agent-pet/releases)에서 확인합니다.
-mac과 Windows 릴리즈는 독립적으로 관리합니다. 아래 배포 파일은 두 플랫폼의 `1.1.0` 버전입니다.
+mac과 Windows 릴리즈는 독립적으로 관리합니다. 현재 배포 버전은 mac `1.1.1`, Windows `1.1.0`입니다.
 
 | 플랫폼 | 배포 파일 | 설치 방법 |
 |---|---|---|
-| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.1.0-mac-arm64.dmg` | DMG를 열고 앱을 응용 프로그램 폴더로 옮깁니다. |
-| macOS 14 이상, Intel | `ChiikawaPet-1.1.0-mac-x86_64.dmg` | DMG를 열고 앱을 응용 프로그램 폴더로 옮깁니다. |
+| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.1.1-mac-arm64.dmg` | DMG를 열고 앱을 응용 프로그램 폴더로 옮깁니다. |
+| macOS 14 이상, Intel | `ChiikawaPet-1.1.1-mac-x86_64.dmg` | DMG를 열고 앱을 응용 프로그램 폴더로 옮깁니다. |
 | Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64-setup.exe` | 설치 프로그램을 실행한 뒤 시작 메뉴에서 Chiikawa Pet을 엽니다. |
 | Windows 10/11, x64 | `ChiikawaPet-1.1.0-win-x64.zip` | **모든 파일을 압축 해제**한 뒤 `ChiikawaPet.exe`를 실행합니다. |
 

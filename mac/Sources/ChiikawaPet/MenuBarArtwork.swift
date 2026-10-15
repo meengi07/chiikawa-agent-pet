@@ -47,7 +47,7 @@ enum MenuBarArtwork {
     }
 
     private static func loadLogo(_ name: String) -> CGImage {
-        guard let url = Bundle.module.url(forResource: name, withExtension: "png"),
+        guard let url = PixelPetView.resourceBundle.url(forResource: name, withExtension: "png"),
               let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let logo = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
             fatalError("Missing bundled menu bar logo: \(name)")

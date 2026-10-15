@@ -6,7 +6,7 @@ mac과 Windows 버전 및 GitHub Release를 독립적으로 관리합니다.
 
 | 플랫폼 | 버전 파일 | 태그 | Workflow | 배포 경로 |
 |---|---|---|---|---|
-| mac | `mac/VERSION` | `mac-v1.1.0` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.1.0/` |
+| mac | `mac/VERSION` | `mac-v1.1.1` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.1.1/` |
 | Windows | `windows/VERSION` | `windows-v1.1.0` | [release-windows.yml](../.github/workflows/release-windows.yml) | `build/release/windows/1.1.0/` |
 
 ## 버전 관리
@@ -37,6 +37,10 @@ python scripts/check-release.py windows
 각 OS의 릴리즈에 독립된 `SHA256SUMS`를 만듭니다. 배포본에 영한 문서,
 MIT 코드 라이선스, 별도 이미지 안내를 넣고 Windows에는 .NET 라이선스도 포함합니다.
 
+mac 배포 전에는 CI에서 만든 DMG를 마운트하고 앱을 `/Applications`에 설치한 뒤
+사용량 패널을 여세요. 선택한 펫·캐릭터 목록·언어 선택·서비스 로고를 확인합니다.
+`--usage`만 실행하면 이미지를 읽지 않으므로 배포본의 리소스 번들 검색 오류를 잡을 수 없습니다.
+
 ## GitHub workflow
 
 수동 실행은 선택한 OS의 검토용 파일을 빌드합니다. 플랫폼 태그를 푸시하면 해당 OS의
@@ -44,9 +48,9 @@ MIT 코드 라이선스, 별도 이미지 안내를 넣고 Windows에는 .NET �
 결과와 파일을 확인한 뒤 초안을 게시하세요.
 
 ```sh
-git tag -a mac-v1.1.0 -m 'Chiikawa Agent Pet mac v1.1.0'
+git tag -a mac-v1.1.1 -m 'Chiikawa Agent Pet mac v1.1.1'
 git push origin main
-git push origin mac-v1.1.0
+git push origin mac-v1.1.1
 ```
 
 ```sh

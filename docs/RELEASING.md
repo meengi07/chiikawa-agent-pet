@@ -6,7 +6,7 @@ mac and Windows have independent versions and GitHub Releases.
 
 | Platform | Version file | Tag | Workflow | Output |
 |---|---|---|---|---|
-| mac | `mac/VERSION` | `mac-v1.1.0` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.1.0/` |
+| mac | `mac/VERSION` | `mac-v1.1.1` | [release-mac.yml](../.github/workflows/release-mac.yml) | `build/release/mac/1.1.1/` |
 | Windows | `windows/VERSION` | `windows-v1.1.0` | [release-windows.yml](../.github/workflows/release-windows.yml) | `build/release/windows/1.1.0/` |
 
 ## Versioning
@@ -39,6 +39,11 @@ Each OS release has its own `SHA256SUMS`. Packages include both documentation
 languages, the MIT source-code license, and a separate artwork notice. Windows
 packages also include .NET's runtime licenses.
 
+Before publishing mac packages, mount the CI-built DMG, install its app into
+`/Applications`, and open the usage panel. Verify the selected pet, all character
+choices, language controls, and provider logos. Running `--usage` alone does not
+load artwork and cannot detect a broken packaged resource-bundle lookup.
+
 ## GitHub workflow
 
 Manual runs build reviewable artifacts for one OS. Pushing a matching platform
@@ -47,9 +52,9 @@ The tag's version must match its platform version file. Review the results and
 assets, then publish the draft.
 
 ```sh
-git tag -a mac-v1.1.0 -m 'Chiikawa Agent Pet mac v1.1.0'
+git tag -a mac-v1.1.1 -m 'Chiikawa Agent Pet mac v1.1.1'
 git push origin main
-git push origin mac-v1.1.0
+git push origin mac-v1.1.1
 ```
 
 ```sh

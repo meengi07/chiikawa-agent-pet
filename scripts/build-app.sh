@@ -11,12 +11,12 @@ fi
 swift build -c release --triple "$BUILD_ARCH-apple-macosx14.0"
 BIN_PATH="$(swift build -c release --triple "$BUILD_ARCH-apple-macosx14.0" --show-bin-path)"
 APP="$PWD/build/ChiikawaPet.app"
+rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_PATH/ChiikawaPet" "$APP/Contents/MacOS/ChiikawaPet"
 cp mac/Resources/Info.plist "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $APP_VERSION" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $APP_VERSION" "$APP/Contents/Info.plist"
-# Keep SwiftPM's macOS bundle intact; PNGs live in its Contents/Resources.
 cp -R "$BIN_PATH/ChiikawaPet_ChiikawaPet.bundle" "$APP/Contents/Resources/"
 cp LICENSE "$APP/Contents/Resources/LICENSE"
 cp assets/NOTICE.md "$APP/Contents/Resources/ARTWORK-NOTICE.md"
