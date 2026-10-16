@@ -26,6 +26,12 @@ internal static class Program
     [STAThread]
     private static int Main(string[] arguments)
     {
+        if (arguments.Length > 0 && arguments[0] == "--executable")
+        {
+            if (arguments.Length == 2) return ExecutableSmoke.Run(arguments[1]);
+            Console.Error.WriteLine("Usage: --executable <ChiikawaPet.exe>");
+            return 1;
+        }
         if (arguments.Length == 1) return RunChild(arguments[0]);
         using (var guard = new Mutex(false, MutexName))
         {

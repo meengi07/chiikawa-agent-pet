@@ -52,6 +52,15 @@ jobs:
           dotnet-version: '10.0.x'
       - run: choco install nsis --yes --no-progress
       - run: ./scripts/package-windows.ps1
+      - name: Probe released and current Windows executables
+        shell: pwsh
+        run: |
+          Invoke-WebRequest "https://github.com/meengi07/chiikawa-agent-pet/releases/download/v1.1.2/ChiikawaPet-1.1.2-win-x64.zip" -OutFile build/released-windows.zip
+          Expand-Archive build/released-windows.zip build/released-windows
+          dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release -- --executable "$PWD/build/released-windows/ChiikawaPet.exe"
+          Write-Host "Released v1.1.2 diagnostic exit: $LASTEXITCODE"
+          dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release -- --executable "$PWD/build/windows/win-x64/ChiikawaPet.exe"
+          if ($LASTEXITCODE -ne 0) { throw 'Current Windows executable interaction failed.' }
       - name: Check Windows pet interactions
         run: dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release
       - name: Check Windows installation
