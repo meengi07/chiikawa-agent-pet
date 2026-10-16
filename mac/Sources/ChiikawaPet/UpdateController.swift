@@ -47,7 +47,7 @@ final class UpdateController: ObservableObject {
         var workspace: URL?
         do {
             let installed = try ReleaseVersion(currentVersion)
-            let target = Bundle.main.bundleURL
+            let target = Bundle.main.bundleURL.standardizedFileURL
             try UpdateTrust.validateTarget(target)
             let key = try UpdateTrust.bundledKey(in: target)
             let created = try UpdateInstaller.makeWorkspace()
@@ -105,7 +105,7 @@ final class UpdateController: ObservableObject {
             }
             try? FileManager.default.removeItem(at: pending.workspace.appendingPathComponent("cancel"))
             status = "업데이트 설치 준비 중…"
-            let process = try UpdateInstaller.startHelper(workspace: pending.workspace, target: Bundle.main.bundleURL, version: pending.version)
+            let process = try UpdateInstaller.startHelper(workspace: pending.workspace, target: Bundle.main.bundleURL.standardizedFileURL, version: pending.version)
             let deadline = Date().addingTimeInterval(600)
             let prepared = pending.workspace.appendingPathComponent("prepared")
             while !FileManager.default.fileExists(atPath: prepared.path), process.isRunning, Date() < deadline {

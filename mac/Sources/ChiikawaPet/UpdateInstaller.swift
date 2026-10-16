@@ -225,6 +225,7 @@ enum UpdateInstaller {
                 try FileManager.default.moveItem(at: backup, to: target)
                 try? Data("failed: \(error.localizedDescription)".utf8).write(to: workspace.appendingPathComponent("result"), options: .atomic)
                 let configuration = NSWorkspace.OpenConfiguration()
+                configuration.createsNewApplicationInstance = true
                 configuration.activates = false
                 configuration.arguments = ["--update-rollback", workspace.path]
                 if request.preview { configuration.arguments += ["--preview", "50"] }
@@ -239,9 +240,10 @@ enum UpdateInstaller {
             }
             if let request = exitedRequest {
                 let target = URL(fileURLWithPath: request.target)
-                let stillRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.path == target.path && !$0.isTerminated }
+                let stillRunning = NSWorkspace.shared.runningApplications.contains { $0.bundleURL?.standardizedFileURL == target.standardizedFileURL && !$0.isTerminated }
                 if !stillRunning, let version = try? UpdateTrust.appVersion(target), version.description == request.currentVersion {
                     let configuration = NSWorkspace.OpenConfiguration()
+                    configuration.createsNewApplicationInstance = true
                     configuration.activates = false
                     configuration.arguments = ["--update-rollback", workspace.path]
                     if request.preview { configuration.arguments += ["--preview", "50"] }
@@ -260,7 +262,7 @@ enum UpdateInstaller {
             try validateWorkspace(workspace)
             let bytes = try Data(contentsOf: workspace.appendingPathComponent("request.json"))
             let request = try JSONDecoder().decode(UpdateApplyRequest.self, from: bytes)
-            guard Bundle.main.bundleURL.path == request.target,
+            guard Bundle.main.bundleURL.standardizedFileURL.path == request.target,
                   Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String == request.version else { return }
             try Data("ready".utf8).write(to: workspace.appendingPathComponent("relaunch-ready"), options: .atomic)
         } catch { return }

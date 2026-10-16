@@ -34,7 +34,7 @@ struct UpdateApplySmokeTests {
         preferences.synchronize()
         var workspaces: [URL] = []
         defer {
-            for running in NSWorkspace.shared.runningApplications where running.bundleURL?.path == target.path {
+            for running in NSWorkspace.shared.runningApplications where running.bundleURL?.standardizedFileURL == target.standardizedFileURL {
                 running.forceTerminate()
             }
             if let previousSentinel { preferences.set(previousSentinel, forKey: sentinelKey) }
@@ -92,7 +92,7 @@ struct UpdateApplySmokeTests {
         try await waitForExit(rollbackHelper, seconds: 120)
         #expect(rollbackHelper.terminationStatus != 0)
         #expect(try UpdateTrust.fileDigest(target.appendingPathComponent("Contents/Info.plist")) == originalDigest)
-        old = try #require(NSWorkspace.shared.runningApplications.first { $0.bundleURL?.path == target.path && !$0.isTerminated })
+        old = try #require(NSWorkspace.shared.runningApplications.first { $0.bundleURL?.standardizedFileURL == target.standardizedFileURL && !$0.isTerminated })
 
         let workspace = try UpdateInstaller.makeWorkspace()
         workspaces.append(workspace)
@@ -114,7 +114,7 @@ struct UpdateApplySmokeTests {
         #expect(result == "installed \(version)")
         #expect(try UpdateTrust.appVersion(target) == version)
         #expect(FileManager.default.fileExists(atPath: workspace.appendingPathComponent("relaunch-ready").path))
-        let restarted = NSWorkspace.shared.runningApplications.first { $0.bundleURL?.path == target.path && $0.processIdentifier != old.processIdentifier }
+        let restarted = NSWorkspace.shared.runningApplications.first { $0.bundleURL?.standardizedFileURL == target.standardizedFileURL && $0.processIdentifier != old.processIdentifier }
         #expect(restarted != nil)
         let restoredPreferences = try #require(UserDefaults(suiteName: UpdateTrust.bundleIdentifier))
         #expect(restoredPreferences.string(forKey: sentinelKey) == sentinel)
