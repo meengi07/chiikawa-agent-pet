@@ -97,7 +97,13 @@ internal sealed class PortableUpdate
 
     internal void Rollback()
     {
-        foreach (string relative in placed) File.Delete(Resolve(target, relative));
+        // Mapped executable images cannot be deleted; move them out before restoring the old files.
+        foreach (string relative in placed)
+        {
+            string destination = Resolve(stage, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Move(Resolve(target, relative), destination);
+        }
         foreach (string relative in saved)
         {
             string destination = Resolve(target, relative);

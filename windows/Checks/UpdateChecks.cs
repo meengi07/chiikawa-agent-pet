@@ -109,7 +109,7 @@ internal static class UpdateChecks
             Check(File.ReadAllText(Path.Combine(target, "unrelated.txt")) == "user data", "Portable rollback preserves unrelated files");
             File.WriteAllText(Path.Combine(replacement, "ChiikawaPet.exe"), "new app");
             File.WriteAllText(Path.Combine(replacement, "unrelated.txt"), "would overwrite");
-            File.WriteAllText(Path.Combine(replacement, PortableUpdate.InventoryName), JsonSerializer.Serialize(new[] { "ChiikawaPet.exe", "unrelated.txt", PortableUpdate.InventoryName }));
+            File.WriteAllText(Path.Combine(replacement, PortableUpdate.InventoryName), JsonSerializer.Serialize(new[] { "ChiikawaPet.exe", "new.dll", "unrelated.txt", PortableUpdate.InventoryName }));
             Reject(() => new PortableUpdate(target, replacement, backup), "New managed file overwrote unowned user file");
             File.WriteAllText(Path.Combine(replacement, PortableUpdate.InventoryName), "[\"../outside\"]");
             Reject(() => new PortableUpdate(target, replacement, backup), "Managed inventory escaped target folder");

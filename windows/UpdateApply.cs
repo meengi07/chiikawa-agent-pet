@@ -255,7 +255,12 @@ internal static class UpdateApply
                 if (restarted != null && !restarted.HasExited) { restarted.Kill(entireProcessTree: true); await restarted.WaitForExitAsync(); }
                 if (request.Installed)
                 {
-                    if (Directory.Exists(target)) { RejectReparse(target); Directory.Delete(target, recursive: true); }
+                    if (Directory.Exists(target))
+                    {
+                        RejectReparse(target);
+                        Directory.Delete(stage);
+                        Directory.Move(target, stage);
+                    }
                     Directory.Move(backup, target);
                     Registry.CurrentUser.DeleteSubKeyTree(UninstallKey, throwOnMissingSubKey: false);
                     using var restored = Registry.CurrentUser.CreateSubKey(UninstallKey);
