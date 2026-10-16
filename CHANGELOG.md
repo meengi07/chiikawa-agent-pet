@@ -3,12 +3,13 @@
 macOS and Windows share the root [VERSION](VERSION) and one `vMAJOR.MINOR.PATCH`
 GitHub Release. Published platform-specific history below remains unchanged.
 
-## 1.1.5 — 2026-10-16
+## 1.1.6 — 2026-10-16
 
 - Match the Windows installer to the macOS DMG with a cream/pastel palette, all four pixel characters, branded setup/uninstall icons, and an embedded multi-size app icon.
 - Add concise English/Korean welcome/completion guidance, optional launch on Finish, a styled uninstall completion page, and a branded Installed Apps entry.
 - Exercise real native install/uninstall wizards, finish launch, installed EXE input, preference/credential preservation, running-pet guards, and silent installation compatibility. Upload rendered wizard screenshots for visual release review.
-- Preserve fixed per-user installation and existing preferences. macOS shares version 1.1.5 without runtime changes; public code signing remains unavailable.
+- Preserve fixed per-user installation and existing preferences. macOS shares version 1.1.6 without runtime changes; public code signing remains unavailable.
+- Create portable ZIP entries with standard forward slashes even under Windows PowerShell 5.1, preserving runtime-license paths across extraction tools. The v1.1.5 release was blocked by portable ZIP validation; its tag remains unchanged.
 
 ## 1.1.4 — 2026-10-16
 

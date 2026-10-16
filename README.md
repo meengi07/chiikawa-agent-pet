@@ -37,15 +37,15 @@ still experimental; see [known limitations](#privacy-and-known-limitations).
 
 ## Installation
 
-Download macOS and Windows packages from the same [v1.1.5 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.5).
-Both platforms use the shared version `1.1.5`; the release's single `SHA256SUMS` covers all four packages below.
+Download macOS and Windows packages from the same [v1.1.6 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6).
+Both platforms use the shared version `1.1.6`; the release's single `SHA256SUMS` covers all four packages below.
 
 | Platform | Package | Installation |
 |---|---|---|
-| macOS 14+, Apple Silicon | `ChiikawaPet-1.1.5-mac-arm64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
-| macOS 14+, Intel | `ChiikawaPet-1.1.5-mac-x86_64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.5-win-x64-setup.exe` | Follow the illustrated wizard; launch on Finish or from the Start menu. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.5-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
+| macOS 14+, Apple Silicon | `ChiikawaPet-1.1.6-mac-arm64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
+| macOS 14+, Intel | `ChiikawaPet-1.1.6-mac-x86_64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
+| Windows 10/11, x64 | `ChiikawaPet-1.1.6-win-x64-setup.exe` | Follow the illustrated wizard; launch on Finish or from the Start menu. |
+| Windows 10/11, x64 | `ChiikawaPet-1.1.6-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
 
 The Windows packages include .NET. The installer uses the current user's
 `%LOCALAPPDATA%\Programs\ChiikawaPet` directory and adds an uninstall entry.

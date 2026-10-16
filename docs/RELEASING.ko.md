@@ -6,12 +6,12 @@ macOS와 Windows는 하나의 버전·태그·GitHub Release를 함께 사용합
 
 | 항목 | 값 |
 |---|---|
-| 버전 기준 | 루트 [VERSION](../VERSION), 현재 `1.1.5` |
-| 태그 | `vMAJOR.MINOR.PATCH`, 현재 `v1.1.5` |
+| 버전 기준 | 루트 [VERSION](../VERSION), 현재 `1.1.6` |
+| 태그 | `vMAJOR.MINOR.PATCH`, 현재 `v1.1.6` |
 | Workflow | [release.yml](../.github/workflows/release.yml) |
-| 릴리즈 노트 | [releases/v1.1.5.md](releases/v1.1.5.md)에 영어·한국어 함께 작성 |
-| macOS 빌드 경로 | `build/release/mac/1.1.5/` |
-| Windows 빌드 경로 | `build/release/windows/1.1.5/` |
+| 릴리즈 노트 | [releases/v1.1.6.md](releases/v1.1.6.md)에 영어·한국어 함께 작성 |
+| macOS 빌드 경로 | `build/release/mac/1.1.6/` |
+| Windows 빌드 경로 | `build/release/windows/1.1.6/` |
 | CI 통합 배포 경로 | `release/`에 네 배포 파일과 단일 `SHA256SUMS` |
 
 ## 버전 관리
@@ -40,7 +40,7 @@ python3 scripts/check-release.py mac
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.5\ChiikawaPet-1.1.5-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.6\ChiikawaPet-1.1.6-win-x64-setup.exe
 python scripts/check-release.py windows
 ```
 
@@ -49,17 +49,17 @@ OS별 검사는 각 빌드 경로의 파일을 확인합니다. 릴리즈를 만
 
 | 플랫폼 | 파일 |
 |---|---|
-| macOS, Apple Silicon | `ChiikawaPet-1.1.5-mac-arm64.dmg` |
-| macOS, Intel | `ChiikawaPet-1.1.5-mac-x86_64.dmg` |
-| Windows, x64 설치 프로그램 | `ChiikawaPet-1.1.5-win-x64-setup.exe` |
-| Windows, x64 포터블 | `ChiikawaPet-1.1.5-win-x64.zip` |
+| macOS, Apple Silicon | `ChiikawaPet-1.1.6-mac-arm64.dmg` |
+| macOS, Intel | `ChiikawaPet-1.1.6-mac-x86_64.dmg` |
+| Windows, x64 설치 프로그램 | `ChiikawaPet-1.1.6-win-x64-setup.exe` |
+| Windows, x64 포터블 | `ChiikawaPet-1.1.6-win-x64.zip` |
 
 ```sh
 python3 scripts/check-release.py all release
 ```
 
 네 파일을 모두 검사하고 `release/SHA256SUMS`를 만듭니다.
-[v1.1.5 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.5)에는
+[v1.1.6 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6)에는
 OS별 검사 결과가 아니라 이 단일 통합 체크섬 파일과 네 배포 파일을 함께 올립니다.
 배포본에 영한 문서, MIT 코드 라이선스, 별도 이미지 안내를 넣고
 Windows에는 .NET 라이선스도 포함합니다.
@@ -82,9 +82,9 @@ mac 패키징은 완성된 DMG를 마운트해 앱 서명, 전역 `/Applications
 초안 생성은 자동 게시가 아닙니다.
 
 ```sh
-git tag -a v1.1.5 -m 'Chiikawa Agent Pet v1.1.5'
+git tag -a v1.1.6 -m 'Chiikawa Agent Pet v1.1.6'
 git push origin main
-git push origin v1.1.5
+git push origin v1.1.6
 ```
 
 Private 저장소의 릴리즈는 계속 비공개입니다. mac 앱은 ad-hoc 서명이며

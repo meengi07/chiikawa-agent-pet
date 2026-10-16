@@ -21,6 +21,22 @@ Copy-Item "$ProjectRoot/VERSION" "$Destination/VERSION" -Force
 $ReleaseDirectory = Join-Path $ProjectRoot "build/release/windows/$Version"
 New-Item -ItemType Directory -Path $ReleaseDirectory -Force | Out-Null
 $Archive = Join-Path $ReleaseDirectory "ChiikawaPet-$Version-$Runtime.zip"
-Compress-Archive -Path "$Destination/*" -DestinationPath $Archive -Force
+Add-Type -AssemblyName System.IO.Compression
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$ArchiveRoot = [IO.Path]::GetFullPath($Destination)
+$ArchiveFile = [IO.File]::Create($Archive)
+$Zip = $null
+try {
+    $Zip = [IO.Compression.ZipArchive]::new($ArchiveFile, [IO.Compression.ZipArchiveMode]::Create)
+    foreach ($File in Get-ChildItem -LiteralPath $Destination -Recurse -File) {
+        # Windows PowerShell's Compress-Archive can emit backslashes instead of portable ZIP paths.
+        $EntryName = $File.FullName.Substring($ArchiveRoot.Length + 1).Replace('\', '/')
+        [IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+            $Zip, $File.FullName, $EntryName, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    }
+} finally {
+    if ($null -ne $Zip) { $Zip.Dispose() }
+    else { $ArchiveFile.Dispose() }
+}
 Write-Host "Windows app: $Destination/ChiikawaPet.exe"
 Write-Host "Portable ZIP: $Archive"
