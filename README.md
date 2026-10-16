@@ -27,8 +27,9 @@ captures show Korean mode; the displayed percentages are demo values.
 - Animated, transparent pets that float above regular windows.
 - Character selection, dragging, optional wandering, and saved preferences.
 - Adjustable size from 40% to 120%, with a default of 65%.
-- Quota details, reset times, manual refresh, and automatic updates every two minutes.
+- Quota details, reset times, manual refresh, and automatic quota refresh every two minutes.
 - macOS menu-bar controls and Windows system-tray controls, even when the pet is hidden.
+- Signed app updates and optional automatic installation on macOS and Windows x64.
 - Existing Claude Code and Codex logins; no separate account or server.
 
 English is the default language. Select **English / 한국어** in the usage panel
@@ -37,15 +38,15 @@ still experimental; see [known limitations](#privacy-and-known-limitations).
 
 ## Installation
 
-Download macOS and Windows packages from the same [v1.1.6 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6).
-Both platforms use the shared version `1.1.6`; the release's single `SHA256SUMS` covers all four packages below.
+Download macOS and Windows packages from the same [v1.2.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0).
+Both platforms use the shared version `1.2.0`; the release's single `SHA256SUMS` covers all four packages below.
 
 | Platform | Package | Installation |
 |---|---|---|
-| macOS 14+, Apple Silicon | `ChiikawaPet-1.1.6-mac-arm64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
-| macOS 14+, Intel | `ChiikawaPet-1.1.6-mac-x86_64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.6-win-x64-setup.exe` | Follow the illustrated wizard; launch on Finish or from the Start menu. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.6-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
+| macOS 14+, Apple Silicon | `ChiikawaPet-1.2.0-mac-arm64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
+| macOS 14+, Intel | `ChiikawaPet-1.2.0-mac-x86_64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64-setup.exe` | Follow the illustrated wizard; launch on Finish or from the Start menu. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
 
 The Windows packages include .NET. The installer uses the current user's
 `%LOCALAPPDATA%\Programs\ChiikawaPet` directory and adds an uninstall entry.
@@ -96,6 +97,24 @@ notification area's `^` overflow if its tray icon is hidden. Hiding the pet keep
 its menu-bar or tray controls available and stops its animation. Wandering pauses
 near the pointer and while the usage panel is open.
 
+### App updates
+
+Open the macOS menu-bar menu or Windows tray menu and choose **Check for Updates…**.
+Accept the install prompt to download the latest stable release, replace the app,
+and restart it. Preferences and CLI sign-in files are preserved. Windows supports
+both installed and portable x64 packages; portable updates leave unrelated files alone.
+
+**Automatic Updates (every 6 hours)** is **off by default**. Enable it to check
+at startup and every six hours, then install and restart automatically. The option
+is saved. Turning it off before installation cancels automatic application.
+Preview mode never checks or downloads app updates.
+
+**Install 1.2.0 manually once if you are on 1.1.6 or earlier**; those versions
+do not have an updater. On Mac, install into `/Applications`, not the mounted DMG.
+Updates are authenticated with a pinned release key and SHA-256 before use.
+This app-specific signature is not Apple notarization or Windows code signing;
+OS security warnings can still appear. Updates replace the full package, not a delta.
+
 ### Quotas and expressions
 
 Remaining quota is `max(0, 100 − utilization)`: exhausted or finite over-limit
@@ -129,7 +148,7 @@ cd chiikawa-agent-pet
 | Platform | Stack | Source-build requirements |
 |---|---|---|
 | macOS | Swift, AppKit, SwiftUI | macOS 14+, Swift 6+, Xcode or Command Line Tools |
-| Windows | C#, .NET 10, WPF; Windows Forms tray icon | .NET 10 SDK; NSIS for the installer |
+| Windows | C#, .NET 10, WPF; Windows Forms tray icon | .NET 10 SDK and MSVC C++ build tools/Windows SDK for the native updater; NSIS for the installer |
 
 ### macOS
 
@@ -147,7 +166,7 @@ Install Command Line Tools with `xcode-select --install` if needed, then:
 ### Windows
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
+.\scripts\build-windows.ps1
 ```
 
 This runs the logic checks and creates a self-contained app and portable ZIP.
@@ -155,7 +174,7 @@ Use `-Runtime win-arm64` for an ARM64 portable build. To create an x64 installer
 install [NSIS](https://nsis.sourceforge.io/Download) and run:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
+.\scripts\package-windows.ps1
 ```
 
 The Windows target can also be compiled from macOS or Linux:
@@ -164,6 +183,10 @@ The Windows target can also be compiled from macOS or Linux:
 dotnet run --project windows/Checks/Checks.csproj -c Release
 dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained true -o build/windows/win-x64
 ```
+
+Raw cross-compilation does not include the native-AOT updater or installer artwork.
+Use the Windows scripts and the matching MSVC toolchain for complete release packages.
+In-app updates support the released Windows x64 packages only.
 
 ### Project structure
 
@@ -196,9 +219,10 @@ open -n /Applications/ChiikawaPet.app --args --preview 10 --show-usage
 
 [VERSION](VERSION) is the sole version source for both applications and their package filenames. See the [release guide](docs/RELEASING.md) and [changelog](CHANGELOG.md).
 The shared [.github/workflows/release.yml](.github/workflows/release.yml) workflow
-builds both platforms for a `vMAJOR.MINOR.PATCH` tag. Both OS jobs must succeed
-before it creates one **draft** GitHub Release containing all four packages and
-one `SHA256SUMS`. Inspect the artifacts before deliberately publishing the draft.
+builds both platforms for a `vMAJOR.MINOR.PATCH` tag. Package checks, signed update
+metadata, and native update/rollback checks on both platforms must succeed before
+it creates one **draft** release: four packages, `SHA256SUMS`, `updates.json`, and
+`updates.sig`. Inspect the artifacts before deliberately publishing the draft.
 
 ## Privacy and known limitations
 

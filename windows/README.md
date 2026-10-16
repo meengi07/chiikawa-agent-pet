@@ -8,15 +8,15 @@ Chiikawa, Hachiware, Usagi, and Momonga sprites.
 ## Installation
 
 Download Windows packages from the shared
-[v1.1.6 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6).
+[v1.2.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0).
 Its single `SHA256SUMS` covers the two Windows packages and both macOS DMGs.
-Run `ChiikawaPet-1.1.6-win-x64-setup.exe` to install for the current user and add
+Run `ChiikawaPet-1.2.0-win-x64-setup.exe` to install for the current user and add
 Start-menu shortcuts and an uninstall entry. No administrator access is required.
 The wizard has a cream/pastel theme, all four characters, and a matching app icon.
 On Finish, leave **Launch Chiikawa Pet** checked to start immediately, or clear it
 and launch later from the Start menu. Korean Windows uses Korean installer text;
 other Windows UI languages use English. Uninstall preserves preferences and CLI sign-in files.
-Alternatively, extract **all** files from `ChiikawaPet-1.1.6-win-x64.zip` and run
+Alternatively, extract **all** files from `ChiikawaPet-1.2.0-win-x64.zip` and run
 `ChiikawaPet.exe`. Both packages include .NET; do not move the portable EXE away
 from its DLLs and other files. Packages currently have no code-signing certificate.
 
@@ -49,6 +49,25 @@ control to hide the pet without quitting.
 Preview mode does not save preference changes. Uninstalling leaves preferences
 and CLI credentials in their separate locations.
 
+## App updates
+
+Choose **Check for Updates…** from the tray or pet's right-click menu, then accept
+the install prompt. The app downloads and verifies the newer stable release,
+exits, applies it, and restarts. A failed startup restores the previous version.
+The installed package uses the per-user installer; portable updates replace only
+files in the app's managed inventory and preserve unrelated files in the directory.
+Preferences and CLI sign-in files remain in their existing locations.
+
+**Automatic Updates (every 6 hours)** is **off by default** and saved in settings.
+Enable it for startup/six-hour checks and automatic installation/restart; turn it
+off before installation to cancel automatic application. Previews never check or
+download updates. In-app updates support x64 Windows only.
+Keep `ChiikawaPet.Updater.exe` and `.chiikawa-managed-files.json` with the app.
+
+Install 1.2.0 manually once when upgrading from 1.1.6 or earlier.
+Pinned-key release signatures and SHA-256 authenticate updates; they are not a
+Windows code-signing certificate and do not remove SmartScreen warnings.
+
 ## Accounts
 
 - Claude: use `/login` in Windows-installed Claude Code. The pet reads `%USERPROFILE%\.claude\.credentials.json`.
@@ -66,22 +85,24 @@ tray values and the expression calculation.
 
 ## Building
 
-Install the .NET 10 SDK and run these commands from the repository root:
+Install the .NET 10 SDK and Visual Studio C++ build tools with MSVC and a Windows SDK
+for the native-AOT updater, then run from the repository root:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
+.\scripts\build-windows.ps1
 ```
 
 The root [VERSION](../VERSION) sets the version for both Windows and macOS.
 The script runs logic checks and writes the app to `build\windows\win-x64` and
-the ZIP to `build\release\windows\1.1.6`. Use `-Runtime win-arm64` for an ARM64 portable build.
+the ZIP to `build\release\windows\1.2.0`. ARM64 source builds require the matching
+MSVC toolchain and `-Runtime win-arm64`; in-app updates are x64-only.
 On Windows, the script generates installer BMPs and a multi-size ICO from the
 existing sprites using built-in System.Drawing, then embeds that icon in the app.
 Generated artwork stays in `build\windows-artwork`; no image tools or modules are needed.
 To create the x64 installer, install NSIS and run:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
+.\scripts\package-windows.ps1
 ```
 
 Cross-compilation from macOS or Linux:
@@ -91,12 +112,12 @@ dotnet run --project windows/Checks/Checks.csproj -c Release
 dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained true -o build/windows/win-x64
 ```
 
-Raw cross-compilation does not generate the Windows installer artwork or branded
-executable icon. Use the Windows build/packaging scripts for release packages.
+Raw cross-compilation does not generate the native-AOT updater, Windows installer
+artwork, or branded executable icon. Use the Windows scripts for complete release packages.
 
 ## Preview and validation
 
-Quit the running pet before previewing. Preview mode performs no quota requests.
+Quit the running pet before previewing. Preview mode performs no quota or update requests.
 
 ```powershell
 .\build\windows\win-x64\ChiikawaPet.exe --preview 10 --show-usage
@@ -119,7 +140,7 @@ Both restore settings and avoid real credentials or quota requests.
 On a clean Windows desktop, run the full installer check:
 
 ```powershell
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.6\ChiikawaPet-1.1.6-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.0\ChiikawaPet-1.2.0-win-x64-setup.exe
 ```
 
 This drives the real install/uninstall wizards, checks finish-page launch, ordinary

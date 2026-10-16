@@ -29,6 +29,7 @@ macOS와 Windows에서 화면 위에 떠다니는 비공식 도트 펫입니다.
 - 크기 40–120% 조절, 기본값 65%
 - 기간별 잔여량·초기화 시각, 수동 새로고침, 2분마다 자동 조회
 - 펫을 숨겨도 사용할 수 있는 macOS 메뉴바와 Windows 트레이
+- macOS·Windows x64 앱 업데이트와 선택형 자동 설치
 - 별도 계정이나 서버 없이 기존 Claude Code·Codex 로그인 연결
 
 기본 언어는 영어입니다. 사용량 패널이나 메뉴의 **English / 한국어**에서
@@ -37,15 +38,15 @@ macOS와 Windows에서 화면 위에 떠다니는 비공식 도트 펫입니다.
 
 ## 설치
 
-macOS와 Windows 배포 파일은 하나의 [v1.1.6 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6)에서 받습니다.
-두 OS 모두 공통 버전 `1.1.6`을 사용하며, 릴리즈의 단일 `SHA256SUMS`에 아래 네 파일의 체크섬을 담습니다.
+macOS와 Windows 배포 파일은 하나의 [v1.2.0 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0)에서 받습니다.
+두 OS 모두 공통 버전 `1.2.0`을 사용하며, 릴리즈의 단일 `SHA256SUMS`에 아래 네 파일의 체크섬을 담습니다.
 
 | 플랫폼 | 배포 파일 | 설치 방법 |
 |---|---|---|
-| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.1.6-mac-arm64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
-| macOS 14 이상, Intel | `ChiikawaPet-1.1.6-mac-x86_64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.6-win-x64-setup.exe` | 캐릭터 설치 화면의 안내를 따르고, 완료 화면이나 시작 메뉴에서 펫을 실행합니다. |
-| Windows 10/11, x64 | `ChiikawaPet-1.1.6-win-x64.zip` | **모든 파일을 압축 해제**한 뒤 `ChiikawaPet.exe`를 실행합니다. |
+| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.2.0-mac-arm64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
+| macOS 14 이상, Intel | `ChiikawaPet-1.2.0-mac-x86_64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64-setup.exe` | 캐릭터 설치 화면의 안내를 따르고, 완료 화면이나 시작 메뉴에서 펫을 실행합니다. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64.zip` | **모든 파일을 압축 해제**한 뒤 `ChiikawaPet.exe`를 실행합니다. |
 
 Windows 배포본에는 .NET이 포함됩니다. 설치 프로그램은 현재 사용자의
 `%LOCALAPPDATA%\Programs\ChiikawaPet`에 설치하고 앱 제거 항목을 추가합니다.
@@ -94,6 +95,22 @@ macOS에는 Dock 아이콘이 없습니다. Windows에는 작업 표시줄 버�
 트레이 아이콘이 숨겨졌다면 알림 영역의 `^`를 확인하세요. 펫을 숨겨도 메뉴바·트레이는
 유지되고 애니메이션은 멈춥니다. 마우스가 펫 가까이에 있거나 패널이 열리면 산책을 멈춥니다.
 
+### 앱 업데이트
+
+macOS 메뉴바 또는 Windows 트레이 메뉴에서 **업데이트 확인…**을 누르세요.
+설치 안내에 동의하면 최신 정식 릴리즈를 내려받아 앱을 교체하고 다시 실행합니다.
+펫 설정과 CLI 로그인 정보는 보존합니다. Windows x64 설치형·포터블을 모두 지원하며
+포터블 폴더의 앱과 무관한 사용자 파일은 변경하지 않습니다.
+
+**자동 업데이트 (6시간마다)**는 **기본 꺼짐**입니다. 켜면 시작할 때와 6시간마다
+새 버전을 확인해 자동 설치·재실행하며, 선택은 다음 실행에도 유지합니다.
+설치 전에 옵션을 끄면 자동 적용을 취소합니다. 미리보기에서는 업데이트를 조회하거나 내려받지 않습니다.
+
+**1.1.6 이하에서는 1.2.0을 한 번 직접 설치해야 합니다.** 이전 버전에는 업데이터가 없습니다.
+Mac은 DMG 안이 아닌 `/Applications`에 설치하세요. 다운로드는 앱에 고정한 릴리즈 공개키와
+SHA-256으로 검증합니다. 이 자체 서명은 Apple 공증·Windows 코드 서명이 아니므로
+OS 보안 경고는 남을 수 있습니다. 차등 패치가 아닌 전체 패키지 교체 방식입니다.
+
 ### 잔여량과 표정
 
 잔여량은 `max(0, 100 − 사용률)`입니다. 사용률이 100%를 넘더라도 잔여 0%와
@@ -125,7 +142,7 @@ cd chiikawa-agent-pet
 | 플랫폼 | 기술스택 | 소스 빌드 요구사항 |
 |---|---|---|
 | macOS | Swift, AppKit, SwiftUI | macOS 14 이상, Swift 6 이상, Xcode 또는 Command Line Tools |
-| Windows | C#, .NET 10, WPF, Windows Forms 트레이 | .NET 10 SDK, 설치 프로그램 생성 시 NSIS |
+| Windows | C#, .NET 10, WPF, Windows Forms 트레이 | .NET 10 SDK, 네이티브 업데이터용 MSVC C++ 빌드 도구·Windows SDK, 설치 프로그램용 NSIS |
 
 ### macOS
 
@@ -143,7 +160,7 @@ cd chiikawa-agent-pet
 ### Windows
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
+.\scripts\build-windows.ps1
 ```
 
 로직 검사 후 런타임을 포함한 앱과 포터블 ZIP을 만듭니다. ARM64 포터블 빌드는
@@ -151,7 +168,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
 설치한 뒤 다음 명령으로 만듭니다.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
+.\scripts\package-windows.ps1
 ```
 
 macOS·Linux에서도 Windows 대상으로 컴파일할 수 있습니다.
@@ -160,6 +177,10 @@ macOS·Linux에서도 Windows 대상으로 컴파일할 수 있습니다.
 dotnet run --project windows/Checks/Checks.csproj -c Release
 dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained true -o build/windows/win-x64
 ```
+
+일반 크로스 빌드에는 Native AOT 업데이터와 설치 이미지가 포함되지 않습니다.
+완전한 배포본은 해당 아키텍처의 MSVC 도구를 갖춘 Windows에서 스크립트로 만드세요.
+앱 내부 업데이트는 정식 배포하는 Windows x64 패키지만 지원합니다.
 
 ### 프로젝트 구조
 
@@ -192,9 +213,9 @@ open -n /Applications/ChiikawaPet.app --args --preview 10 --show-usage
 루트 [VERSION](VERSION) 하나를 기준으로 두 앱의 버전과 배포 파일 이름을 맞춥니다.
 [릴리즈 안내](docs/RELEASING.ko.md)와 [변경 기록](CHANGELOG.md)을 확인하세요.
 공통 [.github/workflows/release.yml](.github/workflows/release.yml)이 `vMAJOR.MINOR.PATCH`
-태그로 두 OS를 빌드합니다. 두 OS 작업이 모두 성공해야 네 배포 파일과 단일
-`SHA256SUMS`를 담은 GitHub Release **초안**을 만듭니다.
-배포 파일을 직접 검토한 뒤 초안 게시 여부를 결정합니다.
+태그로 두 OS를 빌드합니다. 패키지·업데이트 서명·두 플랫폼의 실제 적용 및 복원 검사가
+모두 성공해야 네 배포 파일, `SHA256SUMS`, `updates.json`, `updates.sig`를 담은
+GitHub Release **초안**을 만듭니다. 파일을 직접 검토한 뒤 게시 여부를 결정합니다.
 
 ## 개인정보와 알려진 제한 사항
 

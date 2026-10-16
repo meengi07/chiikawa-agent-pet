@@ -6,15 +6,15 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 
 ## 설치
 
-공통 [v1.1.6 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6)에서 배포 파일을 받습니다.
+공통 [v1.2.0 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0)에서 배포 파일을 받습니다.
 단일 `SHA256SUMS`에 두 Windows 배포 파일과 두 macOS DMG의 체크섬을 함께 담습니다.
-`ChiikawaPet-1.1.6-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
+`ChiikawaPet-1.2.0-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
 시작 메뉴 바로가기와 앱 제거 항목을 추가합니다. 관리자 권한은 필요하지 않습니다.
 설치 화면은 크림색·파스텔 배경, 네 도트 캐릭터와 전용 앱 아이콘으로 꾸몄습니다.
 완료 화면의 **Chiikawa Pet 실행**을 선택하면 바로 실행하고, 해제하면 시작 메뉴에서
 나중에 실행할 수 있습니다. Windows 표시 언어가 한국어면 한국어, 그 외에는 영어로
 안내합니다. 앱을 제거해도 펫 설정과 CLI 로그인 파일은 보존합니다.
-포터블 버전은 `ChiikawaPet-1.1.6-win-x64.zip`을 **모두 압축 해제**한 뒤
+포터블 버전은 `ChiikawaPet-1.2.0-win-x64.zip`을 **모두 압축 해제**한 뒤
 `ChiikawaPet.exe`를 실행합니다. 두 배포본에는 .NET이 포함됩니다.
 포터블 EXE를 DLL 등 다른 파일과 분리하지 마세요. 현재 공인 코드 서명은 없습니다.
 
@@ -44,6 +44,22 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 펫 창에서 Alt+F4를 누르면 앱을 종료하고 실행 잠금을 해제합니다. 시작 메뉴에서
 다시 실행할 수 있습니다. 종료하지 않고 숨기려면 트레이에서 화면에 펫 표시를 끄세요.
 
+## 앱 업데이트
+
+트레이 또는 펫 우클릭 메뉴에서 **업데이트 확인…**을 누르고 설치 안내에 동의하세요.
+최신 정식 버전을 다운로드·검증한 뒤 종료하고 새 버전을 적용해 다시 실행합니다.
+새 앱이 시작하지 못하면 이전 버전으로 복원합니다. 설치형은 현재 사용자 설치 프로그램을
+사용하고, 포터블은 앱 관리 목록의 파일만 교체해 같은 폴더의 다른 사용자 파일을 보존합니다.
+펫 설정과 CLI 로그인 파일은 원래 위치에 유지합니다.
+
+**자동 업데이트 (6시간마다)**는 **기본 꺼짐**이며 설정에 저장합니다.
+켜면 시작할 때와 6시간마다 확인해 자동 설치·재실행합니다. 설치 전에 끄면 자동 적용을
+취소합니다. 미리보기에서는 조회·다운로드하지 않습니다. 앱 내부 업데이트는 Windows x64만
+지원합니다. `ChiikawaPet.Updater.exe`와 `.chiikawa-managed-files.json`을 앱과 함께 유지하세요.
+
+1.1.6 이하에서는 1.2.0을 한 번 직접 설치해야 합니다. 고정한 공개키의 릴리즈 서명과
+SHA-256으로 검증하지만 Windows 코드 서명 인증서는 아니므로 SmartScreen 경고는 남습니다.
+
 ## 계정 연결
 
 - Claude: Windows에 설치된 Claude Code에서 `/login`하세요. `%USERPROFILE%\.claude\.credentials.json`을 읽습니다.
@@ -59,22 +75,23 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 
 ## 빌드
 
-.NET 10 SDK를 설치한 뒤 저장소 루트에서 실행합니다.
+.NET 10 SDK와 Native AOT 업데이터용 Visual Studio C++ 빌드 도구(MSVC·Windows SDK)를
+설치한 뒤 저장소 루트에서 실행합니다.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
+.\scripts\build-windows.ps1
 ```
 
 루트 [VERSION](../VERSION)을 Windows와 macOS의 공통 버전으로 사용합니다.
-로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.1.6`에 ZIP을 만듭니다.
+로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.2.0`에 ZIP을 만듭니다.
 Windows 기본 System.Drawing으로 기존 스프라이트에서 설치 배경 BMP와 다중 크기 ICO를
 만들고 앱에 아이콘을 넣습니다. 생성 이미지는 `build\windows-artwork`에 저장하며
 별도 이미지 도구나 모듈은 필요하지 않습니다.
-ARM64 포터블 빌드는 `-Runtime win-arm64`를 추가하세요. x64 설치 프로그램은
-NSIS를 설치한 뒤 다음 명령으로 만듭니다.
+ARM64 소스 빌드는 해당 MSVC 도구와 `-Runtime win-arm64`가 필요하며 앱 내부 업데이트는
+x64만 지원합니다. x64 설치 프로그램은 NSIS를 설치한 뒤 다음 명령으로 만듭니다.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
+.\scripts\package-windows.ps1
 ```
 
 macOS·Linux에서의 크로스 빌드:
@@ -84,12 +101,12 @@ dotnet run --project windows/Checks/Checks.csproj -c Release
 dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained true -o build/windows/win-x64
 ```
 
-일반 크로스 빌드에서는 Windows 설치 이미지나 전용 실행 파일 아이콘을 만들지 않습니다.
-릴리즈 패키지는 Windows 빌드·패키징 스크립트로 만드세요.
+일반 크로스 빌드에서는 Native AOT 업데이터, Windows 설치 이미지, 전용 실행 파일
+아이콘을 만들지 않습니다. 완전한 릴리즈 패키지는 Windows 빌드·패키징 스크립트로 만드세요.
 
 ## 미리보기와 검증
 
-기존 펫을 종료한 뒤 실행하세요. 미리보기에서는 사용량을 조회하지 않습니다.
+기존 펫을 종료한 뒤 실행하세요. 미리보기에서는 사용량이나 앱 업데이트를 조회하지 않습니다.
 
 ```powershell
 .\build\windows\win-x64\ChiikawaPet.exe --preview 10 --show-usage
@@ -111,7 +128,7 @@ dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release --
 기존 설치가 없는 Windows 데스크톱에서는 전체 설치 검사를 실행할 수 있습니다.
 
 ```powershell
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.6\ChiikawaPet-1.1.6-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.0\ChiikawaPet-1.2.0-win-x64-setup.exe
 ```
 
 실제 설치·제거 화면, 완료 후 실행, 설치된 EXE의 일반 입력, 설정·인증 파일 보존,

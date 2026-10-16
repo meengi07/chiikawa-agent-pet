@@ -7,14 +7,14 @@ AppKit, and SwiftUI and runs from the menu bar without a Dock icon.
 
 ## Installation
 
-Download `ChiikawaPet-1.1.6-mac-arm64.dmg` for Apple Silicon or
-`ChiikawaPet-1.1.6-mac-x86_64.dmg` for Intel from the shared
-[v1.1.6 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6).
+Download `ChiikawaPet-1.2.0-mac-arm64.dmg` for Apple Silicon or
+`ChiikawaPet-1.2.0-mac-x86_64.dmg` for Intel from the shared
+[v1.2.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0).
 Its single `SHA256SUMS` covers both DMGs and both Windows packages.
 Open the DMG and drag `ChiikawaPet.app` from the left onto the Applications
 shortcut on the right, following the arrow. Launch `/Applications/ChiikawaPet.app`.
 The Retina-ready installer has a cream background and all four pixel characters.
-Quit a running pet before replacing the app during an update.
+Quit a running pet before replacing the app manually.
 
 With Hidden Bar 1.11.1 on macOS 27, use exactly `/Applications/ChiikawaPet.app`.
 Its native visibility restriction can hide apps launched from other directories,
@@ -40,6 +40,21 @@ The choice is applied immediately and saved for the next launch.
 The menu bar shows the character, provider logos, and current quota values.
 Claude shows its first two available limits; Codex shows its lowest reported
 limit. Failed or disconnected providers show `—`.
+
+## App updates
+
+Choose **Check for Updates…** from the menu bar or pet's right-click menu.
+Accept the install prompt to download, verify, replace, and restart the app.
+Preferences and CLI sign-ins stay intact; a startup failure restores the previous app.
+The destination must be writable and outside the DMG; use `/Applications`.
+
+**Automatic Updates (every 6 hours)** is saved and **off by default**. When enabled,
+checks run at startup and every six hours and install newer stable releases automatically.
+Disable it before installation to cancel automatic application. Previews never check
+or download updates. Packages use a pinned release key and SHA-256; this does not
+provide Apple Developer ID signing or notarization.
+
+Versions 1.1.6 and earlier have no updater: install 1.2.0 manually once.
 
 ## Accounts
 
@@ -79,7 +94,7 @@ not the system Python. Finder does not need to run during packaging.
 do not install it.
 
 The root [VERSION](../VERSION) sets the version for both macOS and Windows.
-Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.1.6/`.
+Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.2.0/`.
 Quit the running app before trying a preview, which performs no account requests:
 
 ```sh

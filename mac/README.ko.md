@@ -7,14 +7,14 @@ Dock 아이콘 없이 메뉴바에서 제어합니다.
 
 ## 설치
 
-공통 [v1.1.6 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.6)에서
-Apple Silicon은 `ChiikawaPet-1.1.6-mac-arm64.dmg`,
-Intel은 `ChiikawaPet-1.1.6-mac-x86_64.dmg`를 선택하세요.
+공통 [v1.2.0 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0)에서
+Apple Silicon은 `ChiikawaPet-1.2.0-mac-arm64.dmg`,
+Intel은 `ChiikawaPet-1.2.0-mac-x86_64.dmg`를 선택하세요.
 단일 `SHA256SUMS`에 두 DMG와 두 Windows 배포 파일의 체크섬을 함께 담습니다.
 DMG를 열고 화살표를 따라 왼쪽 `ChiikawaPet.app`을 오른쪽 응용 프로그램 폴더로
 드래그한 뒤 `/Applications/ChiikawaPet.app`을 실행합니다.
 설치 화면은 크림색 배경과 네 도트 캐릭터로 꾸몄으며 Retina 화면을 지원합니다.
-업데이트할 때는 실행 중인 펫을 먼저 종료한 뒤 앱을 교체하세요.
+직접 앱을 교체할 때는 실행 중인 펫을 먼저 종료하세요.
 
 macOS 27에서 Hidden Bar 1.11.1을 사용한다면 `/Applications/ChiikawaPet.app`을 실행하세요.
 이 버전의 숨김 API는 `~/Applications`를 포함한 다른 경로에서 실행한 앱을
@@ -38,6 +38,20 @@ macOS 27에서 Hidden Bar 1.11.1을 사용한다면 `/Applications/ChiikawaPet.a
 
 메뉴바에는 캐릭터, 서비스 로고, 현재 잔여량을 표시합니다. Claude는 조회된 첫 두
 한도를, Codex는 조회된 한도 중 최솟값을 표시합니다. 실패·미연결 서비스는 `—`입니다.
+
+## 앱 업데이트
+
+메뉴바나 펫 우클릭 메뉴에서 **업데이트 확인…**을 누르세요.
+설치 안내에 동의하면 새 버전을 다운로드·검증하고 앱을 교체한 뒤 다시 실행합니다.
+펫 설정과 CLI 로그인은 보존하며 새 앱이 시작하지 못하면 이전 앱을 복원합니다.
+DMG 밖의 쓰기 가능한 위치여야 하며 `/Applications`를 권장합니다.
+
+**자동 업데이트 (6시간마다)**는 **기본 꺼짐**이고 선택을 저장합니다.
+켜면 시작할 때와 6시간마다 최신 정식 버전을 확인해 자동 설치·재실행합니다.
+설치 전에 옵션을 끄면 자동 적용을 취소합니다. 미리보기에서는 조회·다운로드하지 않습니다.
+고정한 릴리즈 공개키와 SHA-256으로 검증하지만 Apple Developer ID 서명·공증은 아닙니다.
+
+1.1.6 이하에는 업데이터가 없으므로 1.2.0을 한 번 직접 설치해야 합니다.
 
 ## 계정 연결
 
@@ -73,7 +87,7 @@ DMG 패키징에는 Python 3.10 이상도 필요합니다. 고정 버전 도구�
 업데이트한 뒤 해당 앱을 실행합니다. 빌드·패키징 스크립트만 실행하면 설치하지 않습니다.
 
 루트 [VERSION](../VERSION)을 macOS와 Windows의 공통 버전으로 사용합니다.
-Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.1.6/`에 생성됩니다.
+Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.2.0/`에 생성됩니다.
 미리보기는 기존 앱을 종료한 뒤 실행하며 실제 사용량을 조회하지 않습니다.
 
 ```sh

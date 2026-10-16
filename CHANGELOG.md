@@ -3,6 +3,15 @@
 macOS and Windows share the root [VERSION](VERSION) and one `vMAJOR.MINOR.PATCH`
 GitHub Release. Published platform-specific history below remains unchanged.
 
+## 1.2.0 — 2026-10-16
+
+- Add manual stable-release checks and verified in-app installation on macOS (Apple Silicon/Intel) and Windows x64 (installed/portable).
+- Add a saved automatic-update option, off by default, checking on startup and every six hours with automatic installation and restart. Disabling it before installation cancels automatic application; previews never perform updater I/O.
+- Authenticate raw release manifests with a pinned ECDSA P-256 key and verify package size/SHA-256 before use. Generate signed metadata in CI without distributing the private key.
+- Apply updates through native helpers, retain a backup until startup acknowledgement, and restore/relaunch the previous app on startup failure. Preserve pet preferences, CLI sign-ins, Windows registry version, and unrelated portable-directory files.
+- Gate release creation on native signed-package replacement/restart, rollback, and invalid-input checks for both Mac architectures and Windows installed/portable modes.
+- Install 1.2.0 manually once from 1.1.6 or earlier. App-specific update signatures do not provide Apple notarization or Windows public code signing.
+
 ## 1.1.6 — 2026-10-16
 
 - Match the Windows installer to the macOS DMG with a cream/pastel palette, all four pixel characters, branded setup/uninstall icons, and an embedded multi-size app icon.
