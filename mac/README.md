@@ -7,11 +7,13 @@ AppKit, and SwiftUI and runs from the menu bar without a Dock icon.
 
 ## Installation
 
-Download `ChiikawaPet-1.1.3-mac-arm64.dmg` for Apple Silicon or
-`ChiikawaPet-1.1.3-mac-x86_64.dmg` for Intel from the shared
-[v1.1.3 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.3).
+Download `ChiikawaPet-1.1.4-mac-arm64.dmg` for Apple Silicon or
+`ChiikawaPet-1.1.4-mac-x86_64.dmg` for Intel from the shared
+[v1.1.4 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.4).
 Its single `SHA256SUMS` covers both DMGs and both Windows packages.
-Open the DMG, drag `ChiikawaPet.app` onto `/Applications`, and launch it.
+Open the DMG and drag `ChiikawaPet.app` from the left onto the Applications
+shortcut on the right, following the arrow. Launch `/Applications/ChiikawaPet.app`.
+The Retina-ready installer has a cream background and all four pixel characters.
 Quit a running pet before replacing the app during an update.
 
 With Hidden Bar 1.11.1 on macOS 27, use exactly `/Applications/ChiikawaPet.app`.
@@ -62,7 +64,9 @@ Use the original CLI to reauthenticate. API-key billing has no subscription quot
 
 ## Building from source
 
-Install Swift 6+ through Xcode or Command Line Tools, then run from the repository root:
+Install Swift 6+ through Xcode or Command Line Tools, then run from the repository root.
+DMG packaging also needs Python 3.10+; pinned tools are installed into `build/dmg-tools`,
+not the system Python. Finder does not need to run during packaging.
 
 ```sh
 ./Launch.command
@@ -75,12 +79,12 @@ Install Swift 6+ through Xcode or Command Line Tools, then run from the reposito
 do not install it.
 
 The root [VERSION](../VERSION) sets the version for both macOS and Windows.
-Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.1.3/`.
+Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.1.4/`.
 Quit the running app before trying a preview, which performs no account requests:
 
 ```sh
 open -n /Applications/ChiikawaPet.app --args --preview 10 --show-usage
 ```
 
-Source code is MIT licensed; the package includes `LICENSE` and a separate
-`ARTWORK-NOTICE.md` for character images and provider logos.
+Source code is MIT licensed; the app's `Contents/Resources` includes both README
+languages, `LICENSE`, and `ARTWORK-NOTICE.md` for character images and provider logos.

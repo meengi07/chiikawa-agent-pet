@@ -7,11 +7,13 @@ Dock 아이콘 없이 메뉴바에서 제어합니다.
 
 ## 설치
 
-공통 [v1.1.3 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.3)에서
-Apple Silicon은 `ChiikawaPet-1.1.3-mac-arm64.dmg`,
-Intel은 `ChiikawaPet-1.1.3-mac-x86_64.dmg`를 선택하세요.
+공통 [v1.1.4 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.4)에서
+Apple Silicon은 `ChiikawaPet-1.1.4-mac-arm64.dmg`,
+Intel은 `ChiikawaPet-1.1.4-mac-x86_64.dmg`를 선택하세요.
 단일 `SHA256SUMS`에 두 DMG와 두 Windows 배포 파일의 체크섬을 함께 담습니다.
-DMG를 열고 `ChiikawaPet.app`을 `/Applications`로 옮긴 뒤 실행합니다.
+DMG를 열고 화살표를 따라 왼쪽 `ChiikawaPet.app`을 오른쪽 응용 프로그램 폴더로
+드래그한 뒤 `/Applications/ChiikawaPet.app`을 실행합니다.
+설치 화면은 크림색 배경과 네 도트 캐릭터로 꾸몄으며 Retina 화면을 지원합니다.
 업데이트할 때는 실행 중인 펫을 먼저 종료한 뒤 앱을 교체하세요.
 
 macOS 27에서 Hidden Bar 1.11.1을 사용한다면 `/Applications/ChiikawaPet.app`을 실행하세요.
@@ -58,6 +60,8 @@ Finder는 셸 환경 변수를 상속하지 않으므로 설정한 터미널에�
 ## 소스 빌드
 
 Xcode 또는 Command Line Tools로 Swift 6 이상을 설치한 뒤 저장소 루트에서 실행합니다.
+DMG 패키징에는 Python 3.10 이상도 필요합니다. 고정 버전 도구는 시스템 Python이 아닌
+`build/dmg-tools` 가상 환경에 설치하며, 패키징할 때 Finder를 실행할 필요는 없습니다.
 
 ```sh
 ./Launch.command
@@ -69,12 +73,12 @@ Xcode 또는 Command Line Tools로 Swift 6 이상을 설치한 뒤 저장소 루
 업데이트한 뒤 해당 앱을 실행합니다. 빌드·패키징 스크립트만 실행하면 설치하지 않습니다.
 
 루트 [VERSION](../VERSION)을 macOS와 Windows의 공통 버전으로 사용합니다.
-Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.1.3/`에 생성됩니다.
+Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.1.4/`에 생성됩니다.
 미리보기는 기존 앱을 종료한 뒤 실행하며 실제 사용량을 조회하지 않습니다.
 
 ```sh
 open -n /Applications/ChiikawaPet.app --args --preview 10 --show-usage
 ```
 
-소스 코드는 MIT입니다. 배포본에는 `LICENSE`와 캐릭터 이미지·로고의 별도 범위를 안내하는
-`ARTWORK-NOTICE.md`를 포함합니다.
+소스 코드는 MIT입니다. 앱의 `Contents/Resources`에 영한 README, `LICENSE`,
+캐릭터 이미지·로고의 별도 범위를 안내하는 `ARTWORK-NOTICE.md`를 포함합니다.

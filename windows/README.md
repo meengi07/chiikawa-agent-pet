@@ -8,11 +8,11 @@ Chiikawa, Hachiware, Usagi, and Momonga sprites.
 ## Installation
 
 Download Windows packages from the shared
-[v1.1.3 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.3).
+[v1.1.4 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.4).
 Its single `SHA256SUMS` covers the two Windows packages and both macOS DMGs.
-Run `ChiikawaPet-1.1.3-win-x64-setup.exe` to install for the current user and add
+Run `ChiikawaPet-1.1.4-win-x64-setup.exe` to install for the current user and add
 Start-menu shortcuts and an uninstall entry. No administrator access is required.
-Alternatively, extract **all** files from `ChiikawaPet-1.1.3-win-x64.zip` and run
+Alternatively, extract **all** files from `ChiikawaPet-1.1.4-win-x64.zip` and run
 `ChiikawaPet.exe`. Both packages include .NET; do not move the portable EXE away
 from its DLLs and other files. Packages currently have no code-signing certificate.
 
@@ -70,7 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
 
 The root [VERSION](../VERSION) sets the version for both Windows and macOS.
 The script runs logic checks and writes the app to `build\windows\win-x64` and
-the ZIP to `build\release\windows\1.1.3`. Use `-Runtime win-arm64` for an ARM64 portable build.
+the ZIP to `build\release\windows\1.1.4`. Use `-Runtime win-arm64` for an ARM64 portable build.
 To create the x64 installer, install NSIS and run:
 
 ```powershell

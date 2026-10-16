@@ -28,6 +28,9 @@ jobs:
           version=$(tr -d '\r\n' < VERSION)
           echo "value=$version" >> "$GITHUB_OUTPUT"
           if [ "$GITHUB_REF_TYPE" = tag ]; then test "$GITHUB_REF_NAME" = "v$version"; fi
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
       - run: ./scripts/test.sh
       - run: ./scripts/package-mac.sh '${{ matrix.arch }}'
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

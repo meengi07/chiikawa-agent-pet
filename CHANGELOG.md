@@ -3,6 +3,13 @@
 macOS and Windows share the root [VERSION](VERSION) and one `vMAJOR.MINOR.PATCH`
 GitHub Release. Published platform-specific history below remains unchanged.
 
+## 1.1.4 — 2026-10-16
+
+- Redesign macOS DMGs with a Retina cream background, all four pixel characters, a directional arrow, and fixed app/Applications icon placement for drag installation.
+- Generate a matching transparent macOS app/volume icon from existing sprites, including legible small sizes.
+- Keep bilingual documentation inside the signed app instead of loose installer files; build Finder metadata headlessly with pinned DMG tools.
+- Verify each finished DMG's bundled code signature and global Applications shortcut before accepting the package. Windows shares version 1.1.4 without runtime changes.
+
 ## 1.1.3 — 2026-10-16
 
 - Read the current Claude macOS keychain item through the trusted `security` tool on each refresh before native fallback, preserving account-switcher compatibility without token caching or keychain writes ([#1](https://github.com/meengi07/chiikawa-agent-pet/issues/1)). Stop stalled tool reads after five seconds; locked or untrusted items can still request authorization.
