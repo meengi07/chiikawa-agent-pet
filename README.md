@@ -67,10 +67,12 @@ API-key billing does not provide subscription quota percentages.
 | macOS | `~/.claude/.credentials.json`, or the `Claude Code-credentials` keychain entry | `~/.codex/auth.json`, or the `Codex Auth` keychain entry for the configured home |
 | Windows | `%USERPROFILE%\.claude\.credentials.json` | `%USERPROFILE%\.codex\auth.json` |
 
-On macOS, automatic refresh does not open a keychain authorization dialog. Use
-manual Refresh when keychain access needs permission. Windows Credential
-Manager-only accounts are not supported. Windows does not automatically discover
-WSL credentials; see the [Windows guide](windows/README.md).
+On macOS, Claude keychain reads use `/usr/bin/security` before native fallback and
+reread the active account on every refresh. Locked keychains or items that do not
+trust `security` may still prompt; stalled reads are stopped after five seconds.
+Native fallback and Codex only allow authorization dialogs during manual Refresh.
+Windows Credential Manager-only accounts are not supported. Windows does not
+automatically discover WSL credentials; see the [Windows guide](windows/README.md).
 
 `CLAUDE_CONFIG_DIR` and `CODEX_HOME` override the default paths. Launch the app from
 the terminal that defines them. Finder-launched apps do not inherit your shell's

@@ -43,8 +43,11 @@ limit. Failed or disconnected providers show `—`.
 
 Sign in to Claude Code with `/login` or Codex with `codex login`, then click
 **새로고침** (Refresh). The app reads the default CLI credential files or matching
-macOS keychain entries. Automatic refresh does not prompt for keychain access;
-use manual Refresh to authorize access when necessary.
+macOS keychain entries. Claude's default keychain item is reread through
+`/usr/bin/security` before native fallback on every refresh, including after account
+switches. Locked or untrusted items may request authorization; stalled tool reads
+are stopped after five seconds. Native fallback and Codex only allow authorization
+dialogs during manual Refresh.
 
 Custom `CLAUDE_CONFIG_DIR` and `CODEX_HOME` paths are supported. Finder does not
 inherit shell environment variables, so run the installed executable directly

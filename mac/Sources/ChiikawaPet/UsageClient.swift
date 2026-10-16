@@ -1,4 +1,5 @@
 import CryptoKit
+import Darwin
 import Foundation
 import LocalAuthentication
 import Security
@@ -84,12 +85,68 @@ actor UsageClient: UsageFetching {
         guard directory.resolvingSymlinksInPath().standardizedFileURL == defaultDirectory.resolvingSymlinksInPath().standardizedFileURL else {
             throw UsageFailure.loginRequired(.claude)
         }
+        if let output = Self.claudeSecurityOutput(), let token = try Self.claudeToken(fromSecurityOutput: output) {
+            return token
+        }
         let data = try keychainCredential(service: "Claude Code-credentials", account: nil, allowPrompt: allowKeychainPrompt)
         if let data, let token = try Self.parseClaudeCredential(data) { return token }
         throw UsageFailure.loginRequired(.claude)
     }
 
-    private static func parseClaudeCredential(_ data: Data) throws -> String? {
+    private nonisolated static func claudeSecurityOutput() -> Data? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = ["find-generic-password", "-s", "Claude Code-credentials", "-w"]
+        process.standardInput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        let output = Pipe()
+        process.standardOutput = output
+        do { try process.run() }
+        catch { return nil }
+
+        // security has no no-UI flag; a locked/untrusted item must not stall automatic refresh.
+        let deadline = DispatchWorkItem {
+            if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+        }
+        DispatchQueue.global().asyncAfter(deadline: .now() + 5, execute: deadline)
+        defer {
+            deadline.cancel()
+            try? output.fileHandleForReading.close()
+        }
+        let data = try? output.fileHandleForReading.readToEnd()
+        process.waitUntilExit()
+        guard process.terminationReason == .exit, process.terminationStatus == 0,
+              let data, !data.isEmpty else { return nil }
+        return data
+    }
+
+    nonisolated static func claudeToken(fromSecurityOutput output: Data) throws -> String? {
+        guard let text = String(data: output, encoding: .utf8) else { return nil }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.first == "{" {
+            return try parseClaudeCredential(output)
+        }
+        // security -w hex-encodes passwords containing nonprintable bytes, including JSON newlines.
+        func hexDigit(_ byte: UInt8) -> UInt8? {
+            switch byte {
+            case 48...57: return byte - 48
+            case 65...70: return byte - 55
+            case 97...102: return byte - 87
+            default: return nil
+            }
+        }
+        var hexadecimal = trimmed.utf8.makeIterator()
+        var decoded = Data(capacity: trimmed.utf8.count / 2)
+        while let highByte = hexadecimal.next() {
+            guard let high = hexDigit(highByte), let lowByte = hexadecimal.next(),
+                  let low = hexDigit(lowByte) else { return nil }
+            decoded.append(high * 16 + low)
+        }
+        return try parseClaudeCredential(decoded)
+    }
+
+    private nonisolated static func parseClaudeCredential(_ data: Data) throws -> String? {
         let credentials: ClaudeCredentials
         do { credentials = try JSONDecoder().decode(ClaudeCredentials.self, from: data) }
         catch { throw UsageFailure.loginRequired(.claude) }

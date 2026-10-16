@@ -67,8 +67,11 @@ API 키 요금제는 구독 잔여 퍼센트를 제공하지 않습니다.
 | macOS | `~/.claude/.credentials.json` 또는 `Claude Code-credentials` 키체인 | `~/.codex/auth.json` 또는 설정 경로에 연결된 `Codex Auth` 키체인 |
 | Windows | `%USERPROFILE%\.claude\.credentials.json` | `%USERPROFILE%\.codex\auth.json` |
 
-macOS 자동 조회는 키체인 인증 창을 띄우지 않습니다. 접근 허용이 필요하면 패널에서
-직접 새로고침하세요. Windows Credential Manager에만 저장된 계정은 지원하지 않습니다.
+macOS의 Claude 키체인은 매번 `/usr/bin/security`로 현재 계정을 먼저 읽고, 실패하면
+기존 키체인 조회로 전환합니다. 키체인이 잠겨 있거나 `security`를 신뢰하지 않으면
+인증 창이 뜰 수 있으며, 도구가 5초 안에 끝나지 않으면 중단합니다.
+기존 키체인 조회와 Codex는 직접 새로고침할 때만 인증 창을 허용합니다.
+Windows Credential Manager에만 저장된 계정은 지원하지 않습니다.
 WSL 내부 로그인은 자동으로 찾지 않으며 [Windows 안내](windows/README.ko.md)를 참고하세요.
 
 `CLAUDE_CONFIG_DIR`, `CODEX_HOME`으로 기본 경로를 바꿀 수 있습니다. 해당 환경 변수를
