@@ -48,6 +48,7 @@ internal static class Program
             File.WriteAllText(SettingsPath,
                 "{\"Language\":\"en\",\"Visible\":true,\"Wanders\":false,\"X\":80,\"Y\":80,\"Scale\":0.65}");
             bool passed = RunScenario("interaction");
+            passed = RunScenario("native-panel-close") && passed;
             passed = RunScenario("native-close") && passed;
             passed = RunScenario("relaunch") && passed;
             return passed ? 0 : 1;
@@ -85,6 +86,16 @@ internal static class Program
 
     private static int RunChild(string scenario)
     {
+        Dispatcher.CurrentDispatcher.UnhandledExceptionFilter += (_, error) =>
+        {
+            childExitCode = 1;
+            Console.Error.WriteLine($"FAIL dispatcher: {error.Exception.GetType().FullName}");
+            foreach (var frame in new StackTrace(error.Exception, false).GetFrames())
+            {
+                var method = frame.GetMethod();
+                Console.Error.WriteLine($"  {method?.DeclaringType?.FullName}.{method?.Name}");
+            }
+        };
         Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(async () =>
         {
             try
@@ -95,6 +106,18 @@ internal static class Program
                 Near(window!.Left, saved.RootElement.GetProperty("X").GetDouble(), "Reloaded X");
                 Near(window.Top, saved.RootElement.GetProperty("Y").GetDouble(), "Reloaded Y");
                 if (scenario == "interaction") await CheckInteraction(window);
+                if (scenario == "native-panel-close")
+                {
+                    await Move(new Point(SystemParameters.WorkArea.Right - 5, SystemParameters.WorkArea.Bottom - 5));
+                    ((Button)window.Content).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                    await Task.Delay(100);
+                    var usage = Field("panel").GetValue(window) as Window;
+                    Require(usage?.IsVisible == true && !window.IsMouseOver, "Usage close fixture was not visible and outside the pet.");
+                    Require(PostMessage(new WindowInteropHelper(usage!).Handle, 0x0010, IntPtr.Zero, IntPtr.Zero), "Could not natively close usage.");
+                    await Task.Delay(300);
+                    Require(childExitCode == 0 && window.IsVisible && Field("panel").GetValue(window) == null,
+                        "Native usage close raised an exception or closed the pet.");
+                }
                 Require(PostMessage(new WindowInteropHelper(window).Handle, 0x0010, IntPtr.Zero, IntPtr.Zero),
                     "Could not post native WM_CLOSE.");
             }

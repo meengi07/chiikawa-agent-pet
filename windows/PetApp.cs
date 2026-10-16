@@ -507,6 +507,7 @@ internal sealed class PetApp : Window
         };
         panel.Left = Math.Clamp(Left + Width / 2 - panel.Width / 2, screen.Left, Math.Max(screen.Left, screen.Right - panel.Width));
         panel.Top = Math.Clamp(Top - panel.Height - 8, screen.Top + 12, Math.Max(screen.Top + 12, screen.Bottom - panel.Height - 12));
+        panel.Closing += (_, _) => panel = null;
         panel.Closed += (_, _) => { panel = null; providerCards = null; caption = null; refreshButton = null; };
         panel.KeyDown += (_, key) => { if (key.Key == Key.Escape) ClosePanel(); };
         panel.Deactivated += (_, _) => { if (!IsMouseOver) ClosePanel(); };
