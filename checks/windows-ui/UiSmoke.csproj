@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <StartupObject>Program</StartupObject>
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
@@ -10,6 +11,10 @@
     <ApplicationManifest>../../windows/app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../windows/ChiikawaPet.csproj" />
+    <Compile Include="../../windows/PetApp.cs" Link="PetApp.cs" />
+    <Compile Include="../../windows/Usage.cs" Link="Usage.cs" />
+    <Compile Include="../../windows/Language.cs" Link="Language.cs" />
+    <Compile Include="../../windows/Settings.cs" Link="Settings.cs" />
+    <Resource Include="../../assets/*.png" Link="Sprites/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

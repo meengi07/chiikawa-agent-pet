@@ -20,7 +20,7 @@ internal static class Program
     private const string MutexName = "Local\\ChiikawaAgentPet";
     private static readonly string SettingsPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ChiikawaPet", "settings.json");
-    private static readonly Type PetType = Assembly.Load("ChiikawaPet").GetType("ChiikawaPet.PetApp", true)!;
+    private static readonly Type PetType = typeof(ChiikawaPet.PetApp);
     private static int childExitCode;
 
     [STAThread]
@@ -48,6 +48,7 @@ internal static class Program
         }
         finally
         {
+            mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);
             if (original != null) File.WriteAllBytes(SettingsPath, original);
             else File.Delete(SettingsPath);
         }
@@ -78,7 +79,6 @@ internal static class Program
 
     private static int RunChild(string scenario)
     {
-        Application.ResourceAssembly = PetType.Assembly;
         Dispatcher.CurrentDispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(async () =>
         {
             try
