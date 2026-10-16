@@ -167,7 +167,11 @@ enum UpdateTrust {
     }
 
     static func bundledKey(in app: URL) throws -> String {
-        let key = app.appendingPathComponent("Contents/Resources/ChiikawaPet_ChiikawaPet.bundle/UPDATE_PUBLIC_KEY")
+        let resources = app.appendingPathComponent("Contents/Resources/ChiikawaPet_ChiikawaPet.bundle")
+        guard let bundle = Bundle(url: resources),
+              let key = bundle.url(forResource: "UPDATE_PUBLIC_KEY", withExtension: nil) else {
+            throw UpdateFailure("The pinned update key is missing. Reinstall an official package.")
+        }
         return try String(contentsOf: key, encoding: .utf8)
     }
 }
