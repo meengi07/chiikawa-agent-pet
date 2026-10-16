@@ -29,7 +29,7 @@ final class UpdateDownload: NSObject, URLSessionDownloadDelegate, @unchecked Sen
         self.session = session
         var request = URLRequest(url: url)
         request.setValue("ChiikawaPet-Updater", forHTTPHeaderField: "User-Agent")
-        request.setValue("application/octet-stream", forHTTPHeaderField: "Accept")
+        request.setValue(url.host == "api.github.com" ? "application/vnd.github+json" : "application/octet-stream", forHTTPHeaderField: "Accept")
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
             session.downloadTask(with: request).resume()
