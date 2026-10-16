@@ -177,6 +177,17 @@ function Apply-Update([string]$Target, [bool]$Installed, [string]$Asset, [bool]$
     if (!(Test-Path -LiteralPath (Join-Path $Session 'result'))) {
         $Detail = Get-Content -LiteralPath (Join-Path $Session 'error') -Raw -ErrorAction SilentlyContinue
         $Attributes = (Get-Item -LiteralPath (Join-Path $Target 'ChiikawaPet.exe')).Attributes
+        foreach ($Observed in @(Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue)) {
+            try { Write-Host "[DEBUG-rollback] Surviving app PID=$($Observed.Id) path=$($Observed.Path)" }
+            finally { $Observed.Dispose() }
+        }
+        $Executable = Join-Path $Target 'ChiikawaPet.exe'
+        $Probe = Join-Path $Target 'rollback-rename-probe.exe'
+        try {
+            [IO.File]::Move($Executable, $Probe)
+            [IO.File]::Move($Probe, $Executable)
+            Write-Host '[DEBUG-rollback] Failed app executable can be renamed after helper exit.'
+        } catch { Write-Host "[DEBUG-rollback] Rename probe failed: $($_.Exception.Message)" }
         throw "Apply helper exited $($Helper.ExitCode) without an outcome (EXE attributes: $Attributes): $Detail"
     }
     $Result = Get-Content -LiteralPath (Join-Path $Session 'result') -Raw
