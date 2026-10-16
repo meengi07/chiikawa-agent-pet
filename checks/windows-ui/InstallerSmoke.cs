@@ -29,11 +29,13 @@ internal static class InstallerSmoke
             Require(FindWizard() == IntPtr.Zero, "Another Chiikawa installation wizard is open.");
             if (!uninstall) Require(!Directory.Exists(InstallDirectory), "Installation requires a clean app directory.");
             Directory.CreateDirectory(screenshots);
-            launcher = Process.Start(new ProcessStartInfo(executable) { UseShellExecute = false });
-            Require(launcher != null, "Could not start the native wizard.");
+            launcher = Process.Start(new ProcessStartInfo(executable) { UseShellExecute = false })
+                ?? throw new SmokeFailure("Could not start the native wizard.");
             WaitUntil(() => { wizard = FindWizard(); return wizard != IntPtr.Zero; }, "Native wizard did not appear.");
             GetWindowThreadProcessId(wizard, out uint owner);
             wizardProcess = Process.GetProcessById((int)owner);
+            // Retain the query handle before exit; a PID-only Process cannot recover the exit code afterward.
+            _ = wizardProcess.SafeHandle;
             WaitUntil(() => Ready(wizard, finish: false), "Welcome/confirmation page did not become interactive.");
             Capture(wizard, Path.Combine(screenshots, uninstall ? "uninstall-confirm.png" : "welcome.png"));
             ClickNext(wizard);
