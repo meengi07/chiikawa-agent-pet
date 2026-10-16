@@ -8,11 +8,15 @@ Chiikawa, Hachiware, Usagi, and Momonga sprites.
 ## Installation
 
 Download Windows packages from the shared
-[v1.1.4 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.4).
+[v1.1.5 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.5).
 Its single `SHA256SUMS` covers the two Windows packages and both macOS DMGs.
-Run `ChiikawaPet-1.1.4-win-x64-setup.exe` to install for the current user and add
+Run `ChiikawaPet-1.1.5-win-x64-setup.exe` to install for the current user and add
 Start-menu shortcuts and an uninstall entry. No administrator access is required.
-Alternatively, extract **all** files from `ChiikawaPet-1.1.4-win-x64.zip` and run
+The wizard has a cream/pastel theme, all four characters, and a matching app icon.
+On Finish, leave **Launch Chiikawa Pet** checked to start immediately, or clear it
+and launch later from the Start menu. Korean Windows uses Korean installer text;
+other Windows UI languages use English. Uninstall preserves preferences and CLI sign-in files.
+Alternatively, extract **all** files from `ChiikawaPet-1.1.5-win-x64.zip` and run
 `ChiikawaPet.exe`. Both packages include .NET; do not move the portable EXE away
 from its DLLs and other files. Packages currently have no code-signing certificate.
 
@@ -70,7 +74,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
 
 The root [VERSION](../VERSION) sets the version for both Windows and macOS.
 The script runs logic checks and writes the app to `build\windows\win-x64` and
-the ZIP to `build\release\windows\1.1.4`. Use `-Runtime win-arm64` for an ARM64 portable build.
+the ZIP to `build\release\windows\1.1.5`. Use `-Runtime win-arm64` for an ARM64 portable build.
+On Windows, the script generates installer BMPs and a multi-size ICO from the
+existing sprites using built-in System.Drawing, then embeds that icon in the app.
+Generated artwork stays in `build\windows-artwork`; no image tools or modules are needed.
 To create the x64 installer, install NSIS and run:
 
 ```powershell
@@ -83,6 +90,9 @@ Cross-compilation from macOS or Linux:
 dotnet run --project windows/Checks/Checks.csproj -c Release
 dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained true -o build/windows/win-x64
 ```
+
+Raw cross-compilation does not generate the Windows installer artwork or branded
+executable icon. Use the Windows build/packaging scripts for release packages.
 
 ## Preview and validation
 
@@ -105,10 +115,19 @@ capture loss, routed Space activation, hide/tray/show, native usage-window and p
 window close, process/mutex cleanup, and relaunch. The second launches the actual
 EXE without preview, with animation and refresh enabled, and detects modal error
 dialogs during click/drag, panel close, position saving, and process shutdown.
-Both restore settings and avoid real credentials or quota requests. CI repeats
-ordinary-mode input checks against the installed EXE before uninstalling.
-Visual appearance, real account refresh, and mixed-DPI monitors still require
-manual Windows verification.
+Both restore settings and avoid real credentials or quota requests.
+On a clean Windows desktop, run the full installer check:
+
+```powershell
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.5\ChiikawaPet-1.1.5-win-x64-setup.exe
+```
+
+This drives the real install/uninstall wizards, checks finish-page launch, ordinary
+installed EXE input, preference/credential preservation, mutex guards, and silent
+`/S` compatibility. Rendered welcome/completion/removal screenshots are saved in
+`build\windows-installer-smoke`; CI uploads them with the generated artwork as
+`windows-installer-preview`. Inspect those images before publishing.
+Real account refresh and mixed-DPI monitors still require manual Windows verification.
 
 ## License
 

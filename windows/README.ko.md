@@ -6,11 +6,15 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 
 ## 설치
 
-공통 [v1.1.4 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.4)에서 배포 파일을 받습니다.
+공통 [v1.1.5 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.5)에서 배포 파일을 받습니다.
 단일 `SHA256SUMS`에 두 Windows 배포 파일과 두 macOS DMG의 체크섬을 함께 담습니다.
-`ChiikawaPet-1.1.4-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
+`ChiikawaPet-1.1.5-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
 시작 메뉴 바로가기와 앱 제거 항목을 추가합니다. 관리자 권한은 필요하지 않습니다.
-포터블 버전은 `ChiikawaPet-1.1.4-win-x64.zip`을 **모두 압축 해제**한 뒤
+설치 화면은 크림색·파스텔 배경, 네 도트 캐릭터와 전용 앱 아이콘으로 꾸몄습니다.
+완료 화면의 **Chiikawa Pet 실행**을 선택하면 바로 실행하고, 해제하면 시작 메뉴에서
+나중에 실행할 수 있습니다. Windows 표시 언어가 한국어면 한국어, 그 외에는 영어로
+안내합니다. 앱을 제거해도 펫 설정과 CLI 로그인 파일은 보존합니다.
+포터블 버전은 `ChiikawaPet-1.1.5-win-x64.zip`을 **모두 압축 해제**한 뒤
 `ChiikawaPet.exe`를 실행합니다. 두 배포본에는 .NET이 포함됩니다.
 포터블 EXE를 DLL 등 다른 파일과 분리하지 마세요. 현재 공인 코드 서명은 없습니다.
 
@@ -62,7 +66,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
 ```
 
 루트 [VERSION](../VERSION)을 Windows와 macOS의 공통 버전으로 사용합니다.
-로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.1.4`에 ZIP을 만듭니다.
+로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.1.5`에 ZIP을 만듭니다.
+Windows 기본 System.Drawing으로 기존 스프라이트에서 설치 배경 BMP와 다중 크기 ICO를
+만들고 앱에 아이콘을 넣습니다. 생성 이미지는 `build\windows-artwork`에 저장하며
+별도 이미지 도구나 모듈은 필요하지 않습니다.
 ARM64 포터블 빌드는 `-Runtime win-arm64`를 추가하세요. x64 설치 프로그램은
 NSIS를 설치한 뒤 다음 명령으로 만듭니다.
 
@@ -76,6 +83,9 @@ macOS·Linux에서의 크로스 빌드:
 dotnet run --project windows/Checks/Checks.csproj -c Release
 dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained true -o build/windows/win-x64
 ```
+
+일반 크로스 빌드에서는 Windows 설치 이미지나 전용 실행 파일 아이콘을 만들지 않습니다.
+릴리즈 패키지는 Windows 빌드·패키징 스크립트로 만드세요.
 
 ## 미리보기와 검증
 
@@ -98,8 +108,17 @@ dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release --
 두 번째는 실제 EXE를 미리보기 없이 실행합니다. 애니메이션과 자동 조회를 켠 채
 클릭·드래그·창 닫기·위치 저장·종료를 검사하고 오류 대화상자도 실패로 판정합니다.
 두 검사 모두 설정을 복원하고 실제 인증 정보나 사용량 API를 사용하지 않습니다.
-CI에서는 설치된 EXE에도 일반 실행 입력 검사를 한 뒤 제거합니다.
-외형·실제 계정 조회·혼합 DPI는 Windows에서 직접 확인해야 합니다.
+기존 설치가 없는 Windows 데스크톱에서는 전체 설치 검사를 실행할 수 있습니다.
+
+```powershell
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.5\ChiikawaPet-1.1.5-win-x64-setup.exe
+```
+
+실제 설치·제거 화면, 완료 후 실행, 설치된 EXE의 일반 입력, 설정·인증 파일 보존,
+실행 중 설치 방지와 `/S` 무인 설치 호환성을 확인합니다. 실제 화면 캡처는
+`build\windows-installer-smoke`에 저장합니다. CI의 `windows-installer-preview`
+아티팩트에는 이 캡처와 생성 이미지를 담으므로 배포 전에 확인하세요.
+실제 계정 조회와 혼합 DPI는 Windows에서 별도로 확인해야 합니다.
 
 ## 라이선스
 

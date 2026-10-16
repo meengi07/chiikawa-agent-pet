@@ -7,9 +7,9 @@ Dock 아이콘 없이 메뉴바에서 제어합니다.
 
 ## 설치
 
-공통 [v1.1.4 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.4)에서
-Apple Silicon은 `ChiikawaPet-1.1.4-mac-arm64.dmg`,
-Intel은 `ChiikawaPet-1.1.4-mac-x86_64.dmg`를 선택하세요.
+공통 [v1.1.5 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.5)에서
+Apple Silicon은 `ChiikawaPet-1.1.5-mac-arm64.dmg`,
+Intel은 `ChiikawaPet-1.1.5-mac-x86_64.dmg`를 선택하세요.
 단일 `SHA256SUMS`에 두 DMG와 두 Windows 배포 파일의 체크섬을 함께 담습니다.
 DMG를 열고 화살표를 따라 왼쪽 `ChiikawaPet.app`을 오른쪽 응용 프로그램 폴더로
 드래그한 뒤 `/Applications/ChiikawaPet.app`을 실행합니다.
@@ -73,7 +73,7 @@ DMG 패키징에는 Python 3.10 이상도 필요합니다. 고정 버전 도구�
 업데이트한 뒤 해당 앱을 실행합니다. 빌드·패키징 스크립트만 실행하면 설치하지 않습니다.
 
 루트 [VERSION](../VERSION)을 macOS와 Windows의 공통 버전으로 사용합니다.
-Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.1.4/`에 생성됩니다.
+Intel DMG는 `x86_64`를 지정합니다. 배포 파일은 `build/release/mac/1.1.5/`에 생성됩니다.
 미리보기는 기존 앱을 종료한 뒤 실행하며 실제 사용량을 조회하지 않습니다.
 
 ```sh
