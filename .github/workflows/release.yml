@@ -117,18 +117,18 @@ jobs:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           name: signed-release
-          path: release
+          path: build/update-release
       - name: Apply signed macOS update and restart
         shell: bash
         run: |
           version=$(tr -d '\r\n' < VERSION)
-          package="$PWD/release/ChiikawaPet-$version-mac-${{ matrix.arch }}.dmg"
+          package="$PWD/build/update-release/ChiikawaPet-$version-mac-${{ matrix.arch }}.dmg"
           mount="$(mktemp -d)"
           trap 'hdiutil detach "$mount" >/dev/null 2>&1 || true; rmdir "$mount"' EXIT
           hdiutil attach "$package" -readonly -nobrowse -mountpoint "$mount"
           ./scripts/test-update-mac.sh --app "$mount/ChiikawaPet.app" \
-            --manifest "$PWD/release/updates.json" \
-            --signature "$PWD/release/updates.sig" --package "$package"
+            --manifest "$PWD/build/update-release/updates.json" \
+            --signature "$PWD/build/update-release/updates.sig" --package "$package"
 
   update-windows:
     needs: prepare-release

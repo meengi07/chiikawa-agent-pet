@@ -156,7 +156,7 @@ function Apply-Update([string]$Target, [bool]$Installed, [string]$Asset, [bool]$
     Assert-Preferences
     Stop-Pet
     Remove-Item -LiteralPath $Session -Recurse -Force
-    Write-Host "PASS installed=$Installed rollback=$Rollback: real verified replacement, process restart, registry and preferences."
+    Write-Host "PASS installed=$Installed rollback=${Rollback}: real verified replacement, process restart, registry and preferences."
 }
 try {
     $Portable = Join-Path $Root 'Portable space Ω'
