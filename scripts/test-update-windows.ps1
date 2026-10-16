@@ -27,6 +27,31 @@ $Helpers = [Collections.Generic.List[Diagnostics.Process]]::new()
 if ((Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue) -or (Test-Path -LiteralPath $InstalledTarget) -or (Test-Path $UninstallKey)) {
     throw 'Run update smoke in an isolated Windows account without an installed/running pet.'
 }
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class PetUpdateSmokeWindows {
+    private delegate bool WindowCallback(IntPtr window, IntPtr parameter);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(WindowCallback callback, IntPtr parameter);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr window);
+    [DllImport("user32.dll")] private static extern bool PostMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+    public static IntPtr Find(int processId) {
+        IntPtr found = IntPtr.Zero;
+        EnumWindows((window, _) => {
+            GetWindowThreadProcessId(window, out uint owner);
+            if (owner != (uint)processId || !IsWindowVisible(window)) return true;
+            found = window;
+            return false;
+        }, IntPtr.Zero);
+        return found;
+    }
+    public static bool Close(int processId) {
+        IntPtr window = Find(processId);
+        return window != IntPtr.Zero && PostMessage(window, 0x0010, IntPtr.Zero, IntPtr.Zero);
+    }
+}
+'@
 New-Item -ItemType Directory -Path $Root -Force | Out-Null
 Expand-Archive -LiteralPath $Package -DestinationPath $Payload
 $TrustedHelper = Join-Path $Payload 'ChiikawaPet.Updater.exe'
@@ -39,7 +64,7 @@ function App-Version([string]$Target) {
 }
 function Stop-Pet {
     foreach ($Pet in Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue) {
-        $null = $Pet.CloseMainWindow()
+        $null = [PetUpdateSmokeWindows]::Close($Pet.Id)
         if (!$Pet.WaitForExit(10000)) { $Pet.Kill(); $Pet.WaitForExit() }
     }
 }
@@ -128,7 +153,7 @@ function Apply-Update([string]$Target, [bool]$Installed, [string]$Asset, [bool]$
         Start-Sleep -Milliseconds 500
         Require ((App-Version $Target) -eq $PreviousVersion -and !$Pet.HasExited) 'Helper modified the target before the old process exited.'
     }
-    Require ($Pet.CloseMainWindow()) 'Could not request old-process exit.'
+    Require ([PetUpdateSmokeWindows]::Close($Pet.Id)) 'Could not request old-process exit.'
     Require ($Pet.WaitForExit(15000)) 'Old app did not release its executable and mutex.'
     if ($Rollback) { [IO.File]::WriteAllText($Settings, '{malformed-settings') }
     [IO.File]::WriteAllText((Join-Path $Session 'commit'), 'apply')
@@ -136,7 +161,7 @@ function Apply-Update([string]$Target, [bool]$Installed, [string]$Asset, [bool]$
         # A real startup failure: signed new app cannot read malformed settings and never acknowledges readiness.
         $Deadline = [DateTime]::UtcNow.AddSeconds(90)
         do {
-            $Candidate = Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $Pet.Id -and $_.MainWindowHandle -ne 0 }
+            $Candidate = Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $Pet.Id -and [PetUpdateSmokeWindows]::Find($_.Id) -ne [IntPtr]::Zero }
             if ([DateTime]::UtcNow -gt $Deadline) { throw 'Expected new-app startup error was not visible.' }
             Start-Sleep -Milliseconds 100
         } while (!$Candidate)
