@@ -161,7 +161,12 @@ function Apply-Update([string]$Target, [bool]$Installed, [string]$Asset, [bool]$
         # A real startup failure: signed new app cannot read malformed settings and never acknowledges readiness.
         $Deadline = [DateTime]::UtcNow.AddSeconds(90)
         do {
-            $Candidate = Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue | Where-Object { $_.Id -ne $Pet.Id -and [PetUpdateSmokeWindows]::Find($_.Id) -ne [IntPtr]::Zero }
+            $Candidate = $false
+            foreach ($Observed in @(Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue)) {
+                try {
+                    if ($Observed.Id -ne $Pet.Id -and [PetUpdateSmokeWindows]::Find($Observed.Id) -ne [IntPtr]::Zero) { $Candidate = $true }
+                } finally { $Observed.Dispose() }
+            }
             if ([DateTime]::UtcNow -gt $Deadline) { throw 'Expected new-app startup error was not visible.' }
             Start-Sleep -Milliseconds 100
         } while (!$Candidate)
@@ -171,7 +176,8 @@ function Apply-Update([string]$Target, [bool]$Installed, [string]$Asset, [bool]$
     $Helper.Refresh()
     if (!(Test-Path -LiteralPath (Join-Path $Session 'result'))) {
         $Detail = Get-Content -LiteralPath (Join-Path $Session 'error') -Raw -ErrorAction SilentlyContinue
-        throw "Apply helper exited $($Helper.ExitCode) without an outcome: $Detail"
+        $Attributes = (Get-Item -LiteralPath (Join-Path $Target 'ChiikawaPet.exe')).Attributes
+        throw "Apply helper exited $($Helper.ExitCode) without an outcome (EXE attributes: $Attributes): $Detail"
     }
     $Result = Get-Content -LiteralPath (Join-Path $Session 'result') -Raw
     $Expected = if ($Rollback) { $PreviousVersion } else { $Version }
