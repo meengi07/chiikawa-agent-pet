@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -119,6 +120,7 @@ internal static class UpdateChecks
             Check(restored.AutomaticUpdates && restored.Character == "usagi" && restored.Language == "ko", "Opt-in and preferences persist together");
             if (OperatingSystem.IsWindows())
             {
+                CheckMappedExecutableRollback(temporary, Check);
                 string cache = Path.Combine(temporary, "cache");
                 string abandoned = Path.Combine(cache, Guid.NewGuid().ToString("N"));
                 string live = Path.Combine(cache, Guid.NewGuid().ToString("N"));
@@ -140,6 +142,40 @@ internal static class UpdateChecks
         }
         finally { Directory.Delete(temporary, recursive: true); }
         return checks;
+    }
+
+    private static void CheckMappedExecutableRollback(string temporary, Action<bool, string> check)
+    {
+        string target = Path.Combine(temporary, "mapped-target");
+        string stage = Path.Combine(temporary, "mapped-stage");
+        string backup = Path.Combine(temporary, "mapped-backup");
+        Directory.CreateDirectory(target);
+        Directory.CreateDirectory(stage);
+        string inventory = JsonSerializer.Serialize(new[] { "ChiikawaPet.exe", PortableUpdate.InventoryName });
+        File.WriteAllText(Path.Combine(target, "ChiikawaPet.exe"), "previous app");
+        File.WriteAllText(Path.Combine(target, PortableUpdate.InventoryName), inventory);
+        File.WriteAllText(Path.Combine(target, "personal.txt"), "personal data");
+        File.Copy(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "cmd.exe"), Path.Combine(stage, "ChiikawaPet.exe"));
+        File.WriteAllText(Path.Combine(stage, PortableUpdate.InventoryName), inventory);
+        var transaction = new PortableUpdate(target, stage, backup);
+        transaction.Apply();
+        var start = new ProcessStartInfo(Path.Combine(target, "ChiikawaPet.exe"), "/d /c set /p pet_update_hold=")
+        {
+            UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true
+        };
+        using var mapped = Process.Start(start) ?? throw new Exception("Cannot launch the mapped-image rollback fixture.");
+        try
+        {
+            if (mapped.HasExited) throw new Exception("Mapped-image fixture exited before rollback.");
+            transaction.Rollback();
+            check(File.ReadAllText(Path.Combine(target, "ChiikawaPet.exe")) == "previous app", "Rollback restores the old executable even while Windows retains the failed image mapping");
+            check(File.ReadAllText(Path.Combine(target, "personal.txt")) == "personal data", "Mapped-image rollback preserves personal files");
+        }
+        finally
+        {
+            mapped.StandardInput.Close();
+            if (!mapped.WaitForExit(5000)) { mapped.Kill(entireProcessTree: true); mapped.WaitForExit(); }
+        }
     }
 
     private sealed class UpdateTransport(bool fail) : HttpMessageHandler
