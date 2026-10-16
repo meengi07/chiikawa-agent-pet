@@ -149,7 +149,7 @@ internal static class ExecutableSmoke
         Pause(child, 250);
         Require(GetWindowRect(pet, out NativeRect after), "Could not read pet geometry after drag.");
         Require(Math.Abs(after.Left - before.Left - 64) <= 3 && Math.Abs(after.Top - before.Top - 40) <= 3,
-            "Native drag did not move the pet by the injected physical-pixel displacement.");
+            $"Native drag displacement mismatch: before=({before.Left},{before.Top}), after=({after.Left},{after.Top}), target=({target.X},{target.Y}), DPI={dpi}; expected (+64,+40).");
         Require(UsagePanel(child.Id) == IntPtr.Zero, "Drag incorrectly opened the usage panel.");
         Console.WriteLine("PASS executable drag: actual pet window moved, no panel/error/exit.");
 
