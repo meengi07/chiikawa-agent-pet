@@ -26,6 +26,7 @@ internal sealed class Updates
 
     internal async Task<VerifiedUpdate?> Check(CancellationToken cancellation)
     {
+        UpdateApply.CleanupSessions(CacheRoot, DateTime.UtcNow.AddHours(-1));
         if (RuntimeInformation.OSArchitecture != Architecture.X64 || RuntimeInformation.ProcessArchitecture != Architecture.X64)
             throw new PlatformNotSupportedException("Automatic packages support Windows x64 only. Install the matching release manually on this architecture.");
         byte[] latest = await UpdateProtocol.DownloadBytes("https://api.github.com/repos/meengi07/chiikawa-agent-pet/releases/latest", 65536, cancellation, api: true);
@@ -58,6 +59,7 @@ internal sealed class Updates
         string session = Path.Combine(CacheRoot, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(session);
         string package = Path.Combine(session, update.Asset.Name);
+        bool helperStarted = false;
         try
         {
             await using (var output = new FileStream(package, FileMode.CreateNew, FileAccess.Write, FileShare.None, 65536, true))
@@ -74,6 +76,7 @@ internal sealed class Updates
             var start = new ProcessStartInfo(helper) { UseShellExecute = false, CreateNoWindow = true, WorkingDirectory = session };
             start.ArgumentList.Add(requestPath);
             using var process = Process.Start(start) ?? throw new IOException("Cannot start the update helper.");
+            helperStarted = true;
             string prepared = Path.Combine(session, "prepared");
             while (!File.Exists(prepared))
             {
@@ -86,7 +89,16 @@ internal sealed class Updates
         }
         catch
         {
-            File.WriteAllText(Path.Combine(session, "cancel"), "cancel");
+            if (!helperStarted)
+            {
+                try { Directory.Delete(session, recursive: true); }
+                catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
+            }
+            else
+            {
+                try { File.WriteAllText(Path.Combine(session, "cancel"), "cancel"); }
+                catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) { }
+            }
             throw;
         }
     }

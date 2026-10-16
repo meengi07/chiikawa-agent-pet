@@ -42,6 +42,28 @@ internal static class UpdateApply
 {
     private const string UninstallKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\ChiikawaPet";
 
+    internal static void CleanupSessions(string root, DateTime olderThanUtc)
+    {
+        if (!Directory.Exists(root)) return;
+        RejectReparse(root);
+        foreach (string session in Directory.EnumerateDirectories(root))
+        {
+            if (!Guid.TryParseExact(Path.GetFileName(session), "N", out _)) continue;
+            try
+            {
+                RejectReparse(session);
+                if (Directory.GetCreationTimeUtc(session) >= olderThanUtc) continue;
+                string leasePath = Path.Combine(session, "active.lock");
+                if (File.Exists(leasePath))
+                {
+                    using var probe = new FileStream(leasePath, FileMode.Open, FileAccess.Read, FileShare.None);
+                }
+                Directory.Delete(session, recursive: true);
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
+        }
+    }
+
     internal static void RejectReparse(string path)
     {
         var current = new DirectoryInfo(Path.GetFullPath(path));

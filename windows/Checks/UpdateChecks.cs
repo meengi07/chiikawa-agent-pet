@@ -17,7 +17,7 @@ internal static class UpdateChecks
         void Reject(Action action, string reason)
         {
             try { action(); }
-            catch (Exception error) when (error is IOException or JsonException or CryptographicException or FormatException or InvalidOperationException or KeyNotFoundException or HttpRequestException) { checks++; return; }
+            catch (Exception error) when (error is IOException or InvalidDataException or JsonException or CryptographicException or FormatException or InvalidOperationException or KeyNotFoundException or HttpRequestException) { checks++; return; }
             throw new Exception(reason);
         }
         foreach (string version in new[] { "1.2.0", "0.0.0", "65535.65535.65535" })
@@ -76,7 +76,6 @@ internal static class UpdateChecks
             string digest = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(file)));
             var package = new UpdateAsset(name, "", digest, 4);
             UpdateProtocol.VerifyPackage(file, package).GetAwaiter().GetResult();
-            Check(true, "Exact size and digest accepted");
             Reject(() => UpdateProtocol.VerifyPackage(file, package with { Size = 3 }).GetAwaiter().GetResult(), "Truncation accepted");
             Reject(() => UpdateProtocol.VerifyPackage(file, package with { Sha256 = hash }).GetAwaiter().GetResult(), "Wrong package digest accepted");
             foreach (string entryName in new[] { "../outside", "/absolute", "a\\b", "folder/../escape", "file:stream", "trailing. /file" })
@@ -118,6 +117,26 @@ internal static class UpdateChecks
             new Settings { AutomaticUpdates = true, Character = "usagi", Language = "ko" }.Save(settings);
             var restored = Settings.Load(settings);
             Check(restored.AutomaticUpdates && restored.Character == "usagi" && restored.Language == "ko", "Opt-in and preferences persist together");
+            if (OperatingSystem.IsWindows())
+            {
+                string cache = Path.Combine(temporary, "cache");
+                string abandoned = Path.Combine(cache, Guid.NewGuid().ToString("N"));
+                string live = Path.Combine(cache, Guid.NewGuid().ToString("N"));
+                string unrelated = Path.Combine(cache, "unrelated-directory");
+                Directory.CreateDirectory(abandoned);
+                Directory.CreateDirectory(live);
+                Directory.CreateDirectory(unrelated);
+                File.WriteAllText(Path.Combine(abandoned, "package"), "cancelled download");
+                using (var lease = new FileStream(Path.Combine(live, "active.lock"), FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
+                {
+                    UpdateApply.CleanupSessions(cache, DateTime.UtcNow.AddMinutes(1));
+                    Check(!Directory.Exists(abandoned), "Abandoned update downloads are reclaimed");
+                    Check(Directory.Exists(live), "A live helper's session is never deleted");
+                    Check(Directory.Exists(unrelated), "Cache cleanup leaves unowned directories alone");
+                }
+                UpdateApply.CleanupSessions(cache, DateTime.UtcNow.AddMinutes(1));
+                Check(!Directory.Exists(live), "Completed helper sessions are reclaimed after lease release");
+            }
         }
         finally { Directory.Delete(temporary, recursive: true); }
         return checks;
