@@ -115,6 +115,7 @@ internal static class InstallerSmoke
                 }
                 return pet != null;
             }, "Finish did not launch the installed pet.");
+            _ = pet!.SafeHandle;
             IntPtr window = IntPtr.Zero;
             WaitUntil(() =>
             {
