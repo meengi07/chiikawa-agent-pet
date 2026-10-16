@@ -8,11 +8,11 @@ Chiikawa, Hachiware, Usagi, and Momonga sprites.
 ## Installation
 
 Download Windows packages from the shared
-[v1.1.2 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2).
+[v1.1.3 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.3).
 Its single `SHA256SUMS` covers the two Windows packages and both macOS DMGs.
-Run `ChiikawaPet-1.1.2-win-x64-setup.exe` to install for the current user and add
+Run `ChiikawaPet-1.1.3-win-x64-setup.exe` to install for the current user and add
 Start-menu shortcuts and an uninstall entry. No administrator access is required.
-Alternatively, extract **all** files from `ChiikawaPet-1.1.2-win-x64.zip` and run
+Alternatively, extract **all** files from `ChiikawaPet-1.1.3-win-x64.zip` and run
 `ChiikawaPet.exe`. Both packages include .NET; do not move the portable EXE away
 from its DLLs and other files. Packages currently have no code-signing certificate.
 
@@ -70,7 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
 
 The root [VERSION](../VERSION) sets the version for both Windows and macOS.
 The script runs logic checks and writes the app to `build\windows\win-x64` and
-the ZIP to `build\release\windows\1.1.2`. Use `-Runtime win-arm64` for an ARM64 portable build.
+the ZIP to `build\release\windows\1.1.3`. Use `-Runtime win-arm64` for an ARM64 portable build.
 To create the x64 installer, install NSIS and run:
 
 ```powershell
@@ -97,14 +97,18 @@ desktop, quit the running pet and run the native UI smoke from the repository ro
 
 ```powershell
 dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release
+dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release -- --executable .\build\windows\win-x64\ChiikawaPet.exe
 ```
 
-It checks native mouse click/drag, DPI-adjusted movement, saved and reloaded
-coordinates, capture loss, routed Space activation, hide/tray/show, native window
-close, process/mutex cleanup, and relaunch. It backs up and restores settings and
-does not read credentials or call quota endpoints. CI also verifies installation,
-preview startup, and uninstall. Visual appearance, animation, real account refresh,
-and mixed-DPI monitors still require manual Windows verification.
+The first command checks native mouse click/drag, saved and reloaded coordinates,
+capture loss, routed Space activation, hide/tray/show, native usage-window and pet
+window close, process/mutex cleanup, and relaunch. The second launches the actual
+EXE without preview, with animation and refresh enabled, and detects modal error
+dialogs during click/drag, panel close, position saving, and process shutdown.
+Both restore settings and avoid real credentials or quota requests. CI repeats
+ordinary-mode input checks against the installed EXE before uninstalling.
+Visual appearance, real account refresh, and mixed-DPI monitors still require
+manual Windows verification.
 
 ## License
 

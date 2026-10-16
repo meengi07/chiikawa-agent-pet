@@ -6,11 +6,11 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 
 ## 설치
 
-공통 [v1.1.2 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2)에서 배포 파일을 받습니다.
+공통 [v1.1.3 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.3)에서 배포 파일을 받습니다.
 단일 `SHA256SUMS`에 두 Windows 배포 파일과 두 macOS DMG의 체크섬을 함께 담습니다.
-`ChiikawaPet-1.1.2-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
+`ChiikawaPet-1.1.3-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
 시작 메뉴 바로가기와 앱 제거 항목을 추가합니다. 관리자 권한은 필요하지 않습니다.
-포터블 버전은 `ChiikawaPet-1.1.2-win-x64.zip`을 **모두 압축 해제**한 뒤
+포터블 버전은 `ChiikawaPet-1.1.3-win-x64.zip`을 **모두 압축 해제**한 뒤
 `ChiikawaPet.exe`를 실행합니다. 두 배포본에는 .NET이 포함됩니다.
 포터블 EXE를 DLL 등 다른 파일과 분리하지 마세요. 현재 공인 코드 서명은 없습니다.
 
@@ -62,7 +62,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-windows.ps1
 ```
 
 루트 [VERSION](../VERSION)을 Windows와 macOS의 공통 버전으로 사용합니다.
-로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.1.2`에 ZIP을 만듭니다.
+로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.1.3`에 ZIP을 만듭니다.
 ARM64 포터블 빌드는 `-Runtime win-arm64`를 추가하세요. x64 설치 프로그램은
 NSIS를 설치한 뒤 다음 명령으로 만듭니다.
 
@@ -90,13 +90,16 @@ dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained
 
 ```powershell
 dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release
+dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release -- --executable .\build\windows\win-x64\ChiikawaPet.exe
 ```
 
-실제 마우스 클릭·드래그, DPI를 반영한 이동, 위치 저장·복원, 캡처 해제, WPF Space 입력,
-숨김·트레이·다시 표시, 창 닫기, 프로세스·실행 잠금 정리와 재실행을 확인합니다.
-설정은 백업 후 복원하며 인증 정보를 읽거나 사용량 API를 호출하지 않습니다.
-CI에서는 설치·미리보기 실행·제거도 검사합니다. 외형·애니메이션·실제 계정 조회·혼합 DPI는
-Windows에서 직접 확인해야 합니다.
+첫 명령은 실제 클릭·드래그, 위치 저장·복원, 캡처 해제, WPF Space 입력,
+숨김·트레이·표시, 사용량 창과 펫 창 닫기, 실행 잠금 해제와 재실행을 확인합니다.
+두 번째는 실제 EXE를 미리보기 없이 실행합니다. 애니메이션과 자동 조회를 켠 채
+클릭·드래그·창 닫기·위치 저장·종료를 검사하고 오류 대화상자도 실패로 판정합니다.
+두 검사 모두 설정을 복원하고 실제 인증 정보나 사용량 API를 사용하지 않습니다.
+CI에서는 설치된 EXE에도 일반 실행 입력 검사를 한 뒤 제거합니다.
+외형·실제 계정 조회·혼합 DPI는 Windows에서 직접 확인해야 합니다.
 
 ## 라이선스
 

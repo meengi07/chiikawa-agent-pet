@@ -6,12 +6,12 @@ macOS and Windows share one version, one tag, and one GitHub Release.
 
 | Setting | Value |
 |---|---|
-| Canonical version | Root [VERSION](../VERSION), currently `1.1.2` |
-| Tag | `vMAJOR.MINOR.PATCH`, currently `v1.1.2` |
+| Canonical version | Root [VERSION](../VERSION), currently `1.1.3` |
+| Tag | `vMAJOR.MINOR.PATCH`, currently `v1.1.3` |
 | Workflow | [release.yml](../.github/workflows/release.yml) |
-| Release notes | [releases/v1.1.2.md](releases/v1.1.2.md), English and Korean together |
-| macOS build output | `build/release/mac/1.1.2/` |
-| Windows build output | `build/release/windows/1.1.2/` |
+| Release notes | [releases/v1.1.3.md](releases/v1.1.3.md), English and Korean together |
+| macOS build output | `build/release/mac/1.1.3/` |
+| Windows build output | `build/release/windows/1.1.3/` |
 | Combined CI artifacts | `release/`, containing four packages and one `SHA256SUMS` |
 
 ## Versioning
@@ -37,7 +37,7 @@ python3 scripts/check-release.py mac
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\package-windows.ps1
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.2\ChiikawaPet-1.1.2-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.1.3\ChiikawaPet-1.1.3-win-x64-setup.exe
 python scripts/check-release.py windows
 ```
 
@@ -46,10 +46,10 @@ these four files into `release/` and run the combined check from the repository 
 
 | Platform | File |
 |---|---|
-| macOS, Apple Silicon | `ChiikawaPet-1.1.2-mac-arm64.dmg` |
-| macOS, Intel | `ChiikawaPet-1.1.2-mac-x86_64.dmg` |
-| Windows, x64 installer | `ChiikawaPet-1.1.2-win-x64-setup.exe` |
-| Windows, x64 portable | `ChiikawaPet-1.1.2-win-x64.zip` |
+| macOS, Apple Silicon | `ChiikawaPet-1.1.3-mac-arm64.dmg` |
+| macOS, Intel | `ChiikawaPet-1.1.3-mac-x86_64.dmg` |
+| Windows, x64 installer | `ChiikawaPet-1.1.3-win-x64-setup.exe` |
+| Windows, x64 portable | `ChiikawaPet-1.1.3-win-x64.zip` |
 
 ```sh
 python3 scripts/check-release.py all release
@@ -57,7 +57,7 @@ python3 scripts/check-release.py all release
 
 This validates all four packages and writes `release/SHA256SUMS`. Upload that
 single combined checksum file, not the per-platform check outputs, to the
-[v1.1.2 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2)
+[v1.1.3 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.3)
 alongside all four packages. Packages include both documentation languages,
 the MIT source-code license, and a separate artwork notice. Windows packages
 also include .NET's runtime licenses.
@@ -78,9 +78,9 @@ Inspect the artifacts, checksums, and combined release notes before deliberately
 publishing the draft. Draft creation does not publish the release.
 
 ```sh
-git tag -a v1.1.2 -m 'Chiikawa Agent Pet v1.1.2'
+git tag -a v1.1.3 -m 'Chiikawa Agent Pet v1.1.3'
 git push origin main
-git push origin v1.1.2
+git push origin v1.1.3
 ```
 
 Private repository releases remain private. The mac app is ad-hoc signed, not

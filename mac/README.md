@@ -7,9 +7,9 @@ AppKit, and SwiftUI and runs from the menu bar without a Dock icon.
 
 ## Installation
 
-Download `ChiikawaPet-1.1.2-mac-arm64.dmg` for Apple Silicon or
-`ChiikawaPet-1.1.2-mac-x86_64.dmg` for Intel from the shared
-[v1.1.2 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.2).
+Download `ChiikawaPet-1.1.3-mac-arm64.dmg` for Apple Silicon or
+`ChiikawaPet-1.1.3-mac-x86_64.dmg` for Intel from the shared
+[v1.1.3 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.1.3).
 Its single `SHA256SUMS` covers both DMGs and both Windows packages.
 Open the DMG, drag `ChiikawaPet.app` onto `/Applications`, and launch it.
 Quit a running pet before replacing the app during an update.
@@ -75,7 +75,7 @@ Install Swift 6+ through Xcode or Command Line Tools, then run from the reposito
 do not install it.
 
 The root [VERSION](../VERSION) sets the version for both macOS and Windows.
-Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.1.2/`.
+Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.1.3/`.
 Quit the running app before trying a preview, which performs no account requests:
 
 ```sh

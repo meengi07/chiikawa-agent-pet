@@ -51,40 +51,9 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: choco install nsis --yes --no-progress
-      - name: Prove native panel-close regression against prior source
-        shell: pwsh
-        run: |
-          git fetch --depth 1 origin 089861e9e8256d74027a4a6acc17f1c3d0911894
-          if ($LASTEXITCODE -ne 0) { throw 'Could not fetch the exact pre-fix baseline.' }
-          $path = Join-Path $PWD 'windows/PetApp.cs'
-          $fixed = [IO.File]::ReadAllBytes($path)
-          try {
-            $baseline = git show 089861e9e8256d74027a4a6acc17f1c3d0911894:windows/PetApp.cs
-            if ($LASTEXITCODE -ne 0) { throw 'Could not load pre-fix source.' }
-            [IO.File]::WriteAllText($path, ($baseline -join "`n") + "`n")
-            $baselineOutput = dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release 2>&1
-            $baselineExit = $LASTEXITCODE
-            $baselineText = $baselineOutput -join "`n"
-            Write-Host $baselineText
-            if ($baselineExit -eq 0 -or $baselineText -notmatch 'FAIL native-panel-close' -or $baselineText -notmatch 'FAIL dispatcher: System.InvalidOperationException') {
-              throw 'Pre-fix source did not fail on the expected native panel-close exception.'
-            }
-            Write-Host "Prior-source native panel-close regression failed as expected."
-          } finally {
-            [IO.File]::WriteAllBytes($path, $fixed)
-          }
-          git diff --exit-code -- windows/PetApp.cs
-          if ($LASTEXITCODE -ne 0) { throw 'Fixed source was not restored after the baseline probe.' }
       - run: ./scripts/package-windows.ps1
-      - name: Probe released and current Windows executables
-        shell: pwsh
-        run: |
-          Invoke-WebRequest "https://github.com/meengi07/chiikawa-agent-pet/releases/download/v1.1.2/ChiikawaPet-1.1.2-win-x64.zip" -OutFile build/released-windows.zip
-          Expand-Archive build/released-windows.zip build/released-windows
-          dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release -- --executable "$PWD/build/released-windows/ChiikawaPet.exe"
-          Write-Host "Released v1.1.2 diagnostic exit: $LASTEXITCODE"
-          dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release -- --executable "$PWD/build/windows/win-x64/ChiikawaPet.exe"
-          if ($LASTEXITCODE -ne 0) { throw 'Current Windows executable interaction failed.' }
+      - name: Check Windows portable executable
+        run: dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release -- --executable ./build/windows/win-x64/ChiikawaPet.exe
       - name: Check Windows pet interactions
         run: dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release
       - name: Check Windows installation
