@@ -64,6 +64,15 @@ jobs:
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
           ./scripts/test-installed-windows.ps1 -Installer "./build/release/windows/$version/ChiikawaPet-$version-win-x64-setup.exe"
+      - name: Upload Windows installer previews
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: windows-installer-preview
+          path: |
+            build/windows-installer-smoke/*.png
+            build/windows-artwork/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: release-windows-x64

@@ -26,6 +26,13 @@ internal static class Program
     [STAThread]
     private static int Main(string[] arguments)
     {
+        if (arguments.Length > 0 && (arguments[0] == "--installer" || arguments[0] == "--uninstaller"))
+        {
+            if (arguments.Length == 3)
+                return InstallerSmoke.Run(arguments[1], arguments[2], arguments[0] == "--uninstaller");
+            Console.Error.WriteLine("Usage: --installer <setup.exe> <screenshots-dir> | --uninstaller <Uninstall.exe> <screenshots-dir>");
+            return 1;
+        }
         if (arguments.Length > 0 && arguments[0] == "--executable")
         {
             if (arguments.Length == 2) return ExecutableSmoke.Run(arguments[1]);

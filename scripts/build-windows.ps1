@@ -6,10 +6,12 @@ if ($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
     throw 'VERSION must contain MAJOR.MINOR.PATCH.'
 }
 $Destination = Join-Path $ProjectRoot "build/windows/$Runtime"
+$Artwork = Join-Path $ProjectRoot 'build/windows-artwork'
+& "$PSScriptRoot/render-windows-artwork.ps1" -OutputDirectory $Artwork
 
 dotnet run --project "$ProjectRoot/windows/Checks/Checks.csproj" -c Release
 if ($LASTEXITCODE -ne 0) { throw 'Windows logic checks failed.' }
-dotnet publish "$ProjectRoot/windows/ChiikawaPet.csproj" -c Release -r $Runtime --self-contained true -o $Destination
+dotnet publish "$ProjectRoot/windows/ChiikawaPet.csproj" -c Release -r $Runtime --self-contained true -o $Destination "-p:ApplicationIcon=$Artwork/AppIcon.ico"
 if ($LASTEXITCODE -ne 0) { throw 'Windows build failed.' }
 Copy-Item "$ProjectRoot/windows/README.md" "$Destination/README.md" -Force
 Copy-Item "$ProjectRoot/windows/README.ko.md" "$Destination/README.ko.md" -Force

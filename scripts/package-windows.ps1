@@ -10,6 +10,6 @@ if (-not $Compiler) {
     if (-not (Test-Path $InstalledCompiler)) { throw 'Install NSIS to create the Windows installer.' }
     $CompilerPath = $InstalledCompiler
 } else { $CompilerPath = $Compiler.Source }
-& $CompilerPath "/DVERSION=$Version" "/DPAYLOAD=$Payload" "/DOUTPUT=$Output" "$ProjectRoot/windows/installer.nsi"
+& $CompilerPath "/DVERSION=$Version" "/DPAYLOAD=$Payload" "/DOUTPUT=$Output" "/DARTWORK=$ProjectRoot/build/windows-artwork" "$ProjectRoot/windows/installer.nsi"
 if ($LASTEXITCODE -ne 0) { throw 'Windows installer build failed.' }
 Write-Host "Windows installer: $Output"
