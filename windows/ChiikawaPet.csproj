@@ -16,6 +16,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Checks/**/*.cs" />
+    <Compile Remove="Updater/**/*.cs" />
+    <EmbeddedResource Include="../UPDATE_PUBLIC_KEY" LogicalName="UPDATE_PUBLIC_KEY" />
     <Resource Include="../assets/*.png" Link="Sprites/%(Filename)%(Extension)" />
   </ItemGroup>
   <Target Name="IncludeRuntimeNotices" AfterTargets="Publish">

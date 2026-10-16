@@ -7,6 +7,12 @@ struct ChiikawaPetApp {
     @MainActor
     static func main() async {
         let arguments = CommandLine.arguments
+        if let index = arguments.firstIndex(of: "--apply-update") {
+            guard arguments.indices.contains(index + 1) else { exit(64) }
+            let workspace = URL(fileURLWithPath: arguments[index + 1])
+            let status = await UpdateInstaller.runHelper(workspace: workspace)
+            exit(status)
+        }
         if arguments.contains("--usage") {
             let usageClient = UsageClient()
             for provider in UsageProvider.allCases {
@@ -47,6 +53,7 @@ struct ChiikawaPetApp {
 @MainActor
 final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let store: UsageStore
+    private let updater: UpdateController
     private let showUsageOnLaunch: Bool
     private var petWindow: NSPanel!
     private var usageWindow: NSPanel?
@@ -65,6 +72,7 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     init(previewPercent: Double?, showUsageOnLaunch: Bool) {
         store = UsageStore(usageFetching: UsageClient(), previewPercent: previewPercent)
+        updater = UpdateController(preview: previewPercent != nil)
         self.showUsageOnLaunch = showUsageOnLaunch
     }
 
@@ -119,6 +127,9 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(screenChanged), name: NSWorkspace.didWakeNotification, object: nil)
         Task { await store.refresh() }
         if showUsageOnLaunch { toggleUsage() }
+        let rolledBack = updater.showRollbackFailure(CommandLine.arguments)
+        updater.configureAutomatic(store.automaticUpdates, checkImmediately: !rolledBack)
+        UpdateInstaller.acknowledgeRelaunch(CommandLine.arguments)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -177,6 +188,16 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 item.state = store.isPetVisible ? .on : .off
             } else if item.action == #selector(toggleWandering) {
                 item.state = store.wanders ? .on : .off
+            } else if item.action == #selector(checkForUpdates) {
+                item.isEnabled = !updater.isBusy && store.previewPercent == nil
+            } else if item.action == #selector(installUpdate) {
+                item.title = "\(T("업데이트 설치")) \(updater.availableVersion ?? "")"
+                item.isEnabled = !updater.isBusy && updater.availableVersion != nil
+            } else if item.action == #selector(toggleAutomaticUpdates) {
+                item.state = store.automaticUpdates ? .on : .off
+                item.isEnabled = store.previewPercent == nil
+            } else if item.identifier?.rawValue == "update-status" {
+                item.title = "\(T("현재 버전")) \(updater.currentVersion) · \(T(updater.status))"
             }
         }
     }
@@ -279,6 +300,7 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
+        menu.autoenablesItems = false
         menu.delegate = self
         menu.addItem(withTitle: T("\(store.selectedCharacter.name) · 사용량 보기"), action: #selector(toggleUsage), keyEquivalent: "")
         menu.addItem(withTitle: T("사용량 새로고침 / 연결"), action: #selector(refreshUsage), keyEquivalent: "")
@@ -319,6 +341,14 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         wander.state = store.wanders ? .on : .off
         menu.addItem(withTitle: T("화면 가운데로 데려오기"), action: #selector(centerPet), keyEquivalent: "")
         menu.addItem(.separator())
+        let updateStatus = menu.addItem(withTitle: "\(T("현재 버전")) \(updater.currentVersion) · \(T(updater.status))", action: nil, keyEquivalent: "")
+        updateStatus.identifier = NSUserInterfaceItemIdentifier("update-status")
+        updateStatus.isEnabled = false
+        menu.addItem(withTitle: T("업데이트 확인…"), action: #selector(checkForUpdates), keyEquivalent: "")
+        menu.addItem(withTitle: T("업데이트 설치"), action: #selector(installUpdate), keyEquivalent: "")
+        let automatic = menu.addItem(withTitle: T("자동 업데이트 (6시간마다)"), action: #selector(toggleAutomaticUpdates), keyEquivalent: "")
+        automatic.state = store.automaticUpdates ? .on : .off
+        menu.addItem(.separator())
         menu.addItem(withTitle: T("펫 종료"), action: #selector(quit), keyEquivalent: "q")
         for item in menu.items { item.target = self }
         return menu
@@ -327,6 +357,24 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func selectLanguage(_ sender: NSMenuItem) {
         guard let code = sender.representedObject as? String, let language = AppLanguage(rawValue: code) else { return }
         store.language = language
+    }
+
+    @objc private func checkForUpdates() {
+        Task {
+            await updater.check()
+            guard let version = updater.availableVersion else { return }
+            let alert = NSAlert()
+            alert.messageText = "\(T("새 버전 설치 가능")): \(version)"
+            alert.informativeText = T("설치하면 펫이 다시 시작됩니다. 설정과 로그인 정보는 유지됩니다.")
+            alert.addButton(withTitle: T("업데이트 설치"))
+            alert.addButton(withTitle: T("나중에"))
+            if alert.runModal() == .alertFirstButtonReturn { await updater.install() }
+        }
+    }
+    @objc private func installUpdate() { Task { await updater.install() } }
+    @objc private func toggleAutomaticUpdates() {
+        store.automaticUpdates.toggle()
+        updater.configureAutomatic(store.automaticUpdates)
     }
 
     @objc private func refreshUsage() { Task { await store.refresh(allowKeychainPrompt: true) } }

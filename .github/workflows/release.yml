@@ -80,12 +80,9 @@ jobs:
           path: build/release/windows/${{ steps.version.outputs.value }}/
           if-no-files-found: error
 
-  draft-release:
-    if: github.ref_type == 'tag'
+  prepare-release:
     needs: [mac, windows]
     runs-on: ubuntu-24.04
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
@@ -94,6 +91,87 @@ jobs:
           merge-multiple: true
           path: release
       - run: python3 scripts/check-release.py all release
+      - name: Sign update metadata
+        env:
+          UPDATE_SIGNING_PRIVATE_KEY: ${{ secrets.UPDATE_SIGNING_PRIVATE_KEY }}
+        run: python3 scripts/sign-updates.py release
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: signed-release
+          path: release/
+          if-no-files-found: error
+
+  update-mac:
+    needs: prepare-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: signed-release
+          path: release
+      - name: Apply signed macOS update and restart
+        shell: bash
+        run: |
+          version=$(tr -d '\r\n' < VERSION)
+          package="$PWD/release/ChiikawaPet-$version-mac-${{ matrix.arch }}.dmg"
+          mount="$(mktemp -d)"
+          trap 'hdiutil detach "$mount" >/dev/null 2>&1 || true; rmdir "$mount"' EXIT
+          hdiutil attach "$package" -readonly -nobrowse -mountpoint "$mount"
+          ./scripts/test-update-mac.sh --app "$mount/ChiikawaPet.app" \
+            --manifest "$PWD/release/updates.json" \
+            --signature "$PWD/release/updates.sig" --package "$package"
+
+  update-windows:
+    needs: prepare-release
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: signed-release
+          path: release
+      - name: Download previous public Windows packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v1.1.6 --pattern 'ChiikawaPet-1.1.6-win-x64*' --dir previous
+      - name: Apply signed installed and portable updates
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          $inputs = @{
+            Manifest = './release/updates.json'
+            Signature = './release/updates.sig'
+            Package = "./release/ChiikawaPet-$version-win-x64.zip"
+            Installer = "./release/ChiikawaPet-$version-win-x64-setup.exe"
+            PreviousPortable = './previous/ChiikawaPet-1.1.6-win-x64.zip'
+            PreviousInstaller = './previous/ChiikawaPet-1.1.6-win-x64-setup.exe'
+          }
+          ./scripts/test-update-windows.ps1 @inputs
+
+  draft-release:
+    if: github.ref_type == 'tag'
+    needs: [prepare-release, update-mac, update-windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: signed-release
+          path: release
       - name: Create unified draft
         env:
           GH_TOKEN: ${{ github.token }}

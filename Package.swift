@@ -20,7 +20,7 @@ let package = Package(
                     .deletingLastPathComponent().appendingPathComponent($0).path)
             },
             sources: ["mac/Sources/ChiikawaPet"],
-            resources: [.process("assets")]
+            resources: [.process("assets"), .copy("UPDATE_PUBLIC_KEY")]
         ),
         .testTarget(
             name: "ChiikawaPetTests", dependencies: ["ChiikawaPet"],

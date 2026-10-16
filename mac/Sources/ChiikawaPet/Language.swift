@@ -16,6 +16,22 @@ func T(_ text: String) -> String {
 
 enum EnglishText {
     static let words: [(String, String)] = [
+        ("설치하면 펫이 다시 시작됩니다. 설정과 로그인 정보는 유지됩니다.", "The pet will restart after installation. Settings and login information are preserved."),
+        ("미리보기에서는 업데이트하지 않습니다", "Updates are disabled in preview mode"),
+        ("업데이트를 확인하지 않았습니다", "Updates have not been checked"),
+        ("자동 업데이트 (6시간마다)", "Automatic Updates (every 6 hours)"),
+        ("업데이트 다운로드 중…", "Downloading update…"),
+        ("업데이트 설치 준비 중…", "Preparing update installation…"),
+        ("업데이트 후 다시 시작합니다…", "Restarting after update…"),
+        ("업데이트 확인 중…", "Checking for updates…"),
+        ("새 버전 설치 가능", "Update available"),
+        ("최신 버전입니다", "You’re up to date"),
+        ("업데이트 확인…", "Check for Updates…"),
+        ("업데이트 설치", "Install Update"),
+        ("업데이트 실패", "Update failed"),
+        ("현재 버전", "Current version"),
+        ("나중에", "Later"),
+        ("자동 업데이트가 취소되었습니다", "Automatic update cancelled"),
         ("Windows 터미널에서 codex login 후 새로고침하세요. Credential Manager 저장은 현재 지원하지 않습니다.", "Run codex login in a Windows terminal, then refresh. Credential Manager storage is not supported."),
         ("Claude 인증이 만료되었거나 사용량 권한이 없습니다. Claude Code에서 /login 후 다시 시도하세요.", "Claude authentication expired or lacks usage access. Use /login in Claude Code and retry."),
         ("펫 설정을 저장할 수 없습니다. %LOCALAPPDATA%\\ChiikawaPet 폴더의 쓰기 권한을 확인하세요.", "Cannot save settings. Check write access to %LOCALAPPDATA%\\ChiikawaPet."),

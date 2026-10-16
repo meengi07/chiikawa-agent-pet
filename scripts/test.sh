@@ -8,7 +8,7 @@ if [[ "$DEVELOPER_ROOT" == */CommandLineTools && -d "$FRAMEWORKS/Testing.framewo
         -Xswiftc -load-plugin-library \
         -Xswiftc "$DEVELOPER_ROOT/usr/lib/swift/host/plugins/testing/libTestingMacros.dylib" \
         -Xlinker -F -Xlinker "$FRAMEWORKS" \
-        -Xlinker -rpath -Xlinker "$FRAMEWORKS"
+        -Xlinker -rpath -Xlinker "$FRAMEWORKS" "$@"
 else
-    swift test
+    swift test "$@"
 fi

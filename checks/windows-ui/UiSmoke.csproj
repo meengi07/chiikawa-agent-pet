@@ -15,6 +15,11 @@
     <Compile Include="../../windows/Usage.cs" Link="Usage.cs" />
     <Compile Include="../../windows/Language.cs" Link="Language.cs" />
     <Compile Include="../../windows/Settings.cs" Link="Settings.cs" />
+    <Compile Include="../../windows/UpdateProtocol.cs" Link="UpdateProtocol.cs" />
+    <Compile Include="../../windows/UpdateApply.cs" Link="UpdateApply.cs" />
+    <Compile Include="../../windows/PortableUpdate.cs" Link="PortableUpdate.cs" />
+    <Compile Include="../../windows/Updates.cs" Link="Updates.cs" />
+    <EmbeddedResource Include="../../UPDATE_PUBLIC_KEY" LogicalName="UPDATE_PUBLIC_KEY" />
     <Resource Include="../../assets/*.png" Link="Sprites/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

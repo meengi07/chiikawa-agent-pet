@@ -28,6 +28,9 @@ final class UsageStore: ObservableObject {
     @Published var isPetVisible: Bool {
         didSet { preferences.set(isPetVisible, forKey: "petVisible") }
     }
+    @Published var automaticUpdates: Bool {
+        didSet { preferences.set(automaticUpdates, forKey: "automaticUpdates") }
+    }
     let previewPercent: Double?
     private let usageFetching: any UsageFetching
     private let preferences: UserDefaults
@@ -47,6 +50,7 @@ final class UsageStore: ObservableObject {
             petScale = Self.defaultPetScale
         }
         isPetVisible = preferences.object(forKey: "petVisible") as? Bool ?? true
+        automaticUpdates = preferences.object(forKey: "automaticUpdates") as? Bool ?? false
         if let previewPercent {
             for index in providers.indices {
                 let window = try! QuotaWindow(title: "5시간", usedPercent: 100 - previewPercent, resetsAt: nil)

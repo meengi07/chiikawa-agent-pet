@@ -36,6 +36,12 @@ internal sealed class PetApp : Window
     private readonly Forms.NotifyIcon tray = new();
     private readonly DispatcherTimer animation = new() { Interval = TimeSpan.FromMilliseconds(140) };
     private readonly DispatcherTimer refreshTimer = new() { Interval = TimeSpan.FromMinutes(2) };
+    private readonly DispatcherTimer updateTimer = new() { Interval = TimeSpan.FromHours(6) };
+    private readonly Updates updates = new();
+    private CancellationTokenSource? updateCancellation;
+    private bool updating;
+    private bool automaticUpdate;
+    private string updateStatus = "업데이트를 확인하지 않았습니다";
     private Window? panel;
     private ContextMenu? petMenu;
     private StackPanel? providerCards;
@@ -92,6 +98,9 @@ internal sealed class PetApp : Window
         this.preview = preview;
         settings = Settings.Load(SettingsPath);
         ChiikawaPet.Language.Current = settings.Language;
+        bool updateFailed = Environment.GetEnvironmentVariable("CHIIKAWA_UPDATE_FAILED") == "1";
+        Environment.SetEnvironmentVariable("CHIIKAWA_UPDATE_FAILED", null);
+        if (updateFailed) updateStatus = "업데이트하지 못했습니다. 이전 버전을 복원했습니다.";
         Title = T("치이카와 펫");
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
@@ -155,6 +164,7 @@ internal sealed class PetApp : Window
         DpiChanged += (_, _) => ClampPosition();
         animation.Tick += (_, _) => Animate();
         refreshTimer.Tick += async (_, _) => await Refresh();
+        updateTimer.Tick += async (_, _) => await CheckForUpdates(automatic: true);
         BuildTrayMenu();
         tray.MouseClick += (_, mouse) =>
         {
@@ -164,11 +174,23 @@ internal sealed class PetApp : Window
         tray.Visible = true;
         refreshTimer.Start();
         Dispatcher.BeginInvoke(new Action(async () => await Refresh()));
+        if (preview == null && settings.AutomaticUpdates)
+        {
+            updateTimer.Start();
+            if (!updateFailed) Dispatcher.BeginInvoke(new Action(async () => await CheckForUpdates(automatic: true)));
+        }
+        Loaded += (_, _) =>
+        {
+            Updates.AcknowledgeStartup();
+            if (updateFailed) tray.ShowBalloonTip(5000, T("치이카와 펫"), T(updateStatus), Forms.ToolTipIcon.Warning);
+        };
         Closing += (_, _) =>
         {
             closing = true;
             animation.Stop();
             refreshTimer.Stop();
+            updateTimer.Stop();
+            updateCancellation?.Cancel();
             ClosePanel();
             SaveSettings();
             tray.Visible = false;
@@ -411,9 +433,22 @@ internal sealed class PetApp : Window
         menu.Items.Add(wander);
         menu.Items.Add(T("화면 가운데로 데려오기"), null, (_, _) => Dispatcher.Invoke(CenterPet));
         menu.Items.Add(T("새로고침"), null, (_, _) => Dispatcher.InvokeAsync(Refresh));
+        menu.Items.Add(T("업데이트 확인…"), null, (_, _) => Dispatcher.InvokeAsync(() => CheckForUpdates(automatic: false))).Name = "update-check";
+        var automatic = new Forms.ToolStripMenuItem(T("자동 업데이트"));
+        automatic.Click += (_, _) => Dispatcher.Invoke(ToggleAutomaticUpdates);
+        menu.Items.Add(automatic);
+        var status = new Forms.ToolStripMenuItem(T(updateStatus)) { Enabled = false };
+        menu.Items.Add(status);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(T("펫 종료"), null, (_, _) => Dispatcher.Invoke(Quit));
-        menu.Opening += (_, _) => { visible.Checked = settings.Visible; wander.Checked = settings.Wanders; };
+        menu.Opening += (_, _) =>
+        {
+            visible.Checked = settings.Visible;
+            wander.Checked = settings.Wanders;
+            automatic.Checked = settings.AutomaticUpdates;
+            automatic.Enabled = preview == null;
+            status.Text = T(updateStatus);
+        };
         tray.ContextMenuStrip = menu;
     }
 
@@ -435,8 +470,70 @@ internal sealed class PetApp : Window
         Add(T("느긋하게 산책하기"), () => { settings.Wanders = !settings.Wanders; SaveSettings(); }, settings.Wanders);
         Add(T("화면 가운데로 데려오기"), CenterPet);
         Add(T("새로고침"), async () => await Refresh());
+        Add(T("업데이트 확인…"), async () => await CheckForUpdates(automatic: false));
+        Add(T("자동 업데이트"), ToggleAutomaticUpdates, settings.AutomaticUpdates);
+        menu.Items.Add(new MenuItem { Header = T(updateStatus), IsEnabled = false });
         Add(T("펫 종료"), Quit);
         return menu;
+    }
+
+    private void ToggleAutomaticUpdates()
+    {
+        if (preview != null) return;
+        settings.AutomaticUpdates = !settings.AutomaticUpdates;
+        if (!settings.AutomaticUpdates && automaticUpdate) updateCancellation?.Cancel();
+        SaveSettings();
+        if (settings.AutomaticUpdates)
+        {
+            updateTimer.Start();
+            _ = CheckForUpdates(automatic: true);
+        }
+        else
+        {
+            updateTimer.Stop();
+        }
+    }
+
+    private async Task CheckForUpdates(bool automatic)
+    {
+        if (updating || closing) return;
+        if (preview != null)
+        {
+            if (!automatic) MessageBox.Show(T("미리보기에서는 업데이트하지 않습니다."), T("치이카와 펫"));
+            return;
+        }
+        updating = true;
+        automaticUpdate = automatic;
+        updateStatus = "업데이트 확인 중…";
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(15));
+        updateCancellation = cancellation;
+        try
+        {
+            var available = await updates.Check(cancellation.Token);
+            if (closing) return;
+            if (available == null)
+            {
+                updateStatus = "최신 버전입니다";
+                if (!automatic) MessageBox.Show(T(updateStatus), T("치이카와 펫"));
+                return;
+            }
+            updateStatus = "새 업데이트가 있습니다";
+            if (automatic && !settings.AutomaticUpdates) return;
+            if (!automatic && MessageBox.Show($"{T("새 버전을 설치하고 펫을 다시 시작할까요?")}{Environment.NewLine}{Updates.AppVersion} → {available.Version}",
+                    T("치이카와 펫"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            updateStatus = "업데이트 다운로드 및 검증 중…";
+            await updates.Prepare(available, cancellation.Token);
+            Quit();
+        }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            if (closing) return;
+            if (automatic && !settings.AutomaticUpdates) { updateStatus = "자동 업데이트 꺼짐"; return; }
+            updateStatus = error is PlatformNotSupportedException ? "자동 업데이트는 Windows x64에서만 지원합니다." : "업데이트하지 못했습니다. 네트워크와 앱 폴더 쓰기 권한을 확인하거나 공식 설치 파일로 다시 설치하세요.";
+            if (!automatic) MessageBox.Show(T(updateStatus), T("치이카와 펫"), MessageBoxButton.OK, MessageBoxImage.Warning);
+            else tray.ShowBalloonTip(5000, T("치이카와 펫"), T(updateStatus), Forms.ToolTipIcon.Warning);
+        }
+        finally { updating = false; automaticUpdate = false; updateCancellation = null; }
     }
 
     private static TextBlock Text(string text, double size = 12) => new()

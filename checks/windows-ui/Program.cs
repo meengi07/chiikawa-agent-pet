@@ -58,6 +58,10 @@ internal static class Program
             passed = RunScenario("native-panel-close") && passed;
             passed = RunScenario("native-close") && passed;
             passed = RunScenario("relaunch") && passed;
+            var previewSettings = ChiikawaPet.Settings.Load(SettingsPath);
+            previewSettings.AutomaticUpdates = true;
+            previewSettings.Save(SettingsPath);
+            passed = RunScenario("preview-updates") && passed;
             return passed ? 0 : 1;
         }
         finally
@@ -113,6 +117,11 @@ internal static class Program
                 Near(window!.Left, saved.RootElement.GetProperty("X").GetDouble(), "Reloaded X");
                 Near(window.Top, saved.RootElement.GetProperty("Y").GetDouble(), "Reloaded Y");
                 if (scenario == "interaction") await CheckInteraction(window);
+                if (scenario == "preview-updates")
+                    Require(!((DispatcherTimer)Field("updateTimer").GetValue(window)!).IsEnabled
+                        && !(bool)Field("updating").GetValue(window)!
+                        && (string)Field("updateStatus").GetValue(window)! == "업데이트를 확인하지 않았습니다",
+                        "Preview started updater I/O with persisted automatic updates enabled.");
                 if (scenario == "native-panel-close")
                 {
                     await Move(new Point(SystemParameters.WorkArea.Right - 5, SystemParameters.WorkArea.Bottom - 5));
@@ -211,6 +220,22 @@ internal static class Program
         Call(window, "ClosePanel");
         visibility.PerformClick();
         Require(window.IsVisible && tray.Visible, "Tray could not show the hidden pet again.");
+        Field("updating").SetValue(window, true);
+        Call(window, "ToggleAutomaticUpdates");
+        var updateTimer = (DispatcherTimer)Field("updateTimer").GetValue(window)!;
+        Require(updateTimer.IsEnabled && updateTimer.Interval == TimeSpan.FromHours(6), "Automatic update cadence is not six hours.");
+        using (var saved = JsonDocument.Parse(File.ReadAllText(SettingsPath)))
+            Require(saved.RootElement.GetProperty("AutomaticUpdates").GetBoolean(), "Automatic update opt-in did not persist.");
+        using var automaticCancellation = new CancellationTokenSource();
+        Field("automaticUpdate").SetValue(window, true);
+        Field("updateCancellation").SetValue(window, automaticCancellation);
+        Call(window, "ToggleAutomaticUpdates");
+        Require(!updateTimer.IsEnabled, "Disabling automatic updates did not stop the timer.");
+        Require(automaticCancellation.IsCancellationRequested, "Disabling automatic updates did not cancel an in-flight automatic update.");
+        Field("automaticUpdate").SetValue(window, false);
+        Field("updateCancellation").SetValue(window, null);
+        Field("updating").SetValue(window, false);
+        Require(tray.ContextMenuStrip.Items.ContainsKey("update-check"), "Manual update action missing from tray.");
         Console.WriteLine("PASS native drag/click, persisted coordinates, capture loss, routed Space key, hide/tray/show.");
     }
 

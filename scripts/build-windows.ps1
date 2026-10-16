@@ -13,11 +13,22 @@ dotnet run --project "$ProjectRoot/windows/Checks/Checks.csproj" -c Release
 if ($LASTEXITCODE -ne 0) { throw 'Windows logic checks failed.' }
 dotnet publish "$ProjectRoot/windows/ChiikawaPet.csproj" -c Release -r $Runtime --self-contained true -o $Destination "-p:ApplicationIcon=$Artwork/AppIcon.ico"
 if ($LASTEXITCODE -ne 0) { throw 'Windows build failed.' }
+dotnet publish "$ProjectRoot/windows/Updater/Updater.csproj" -c Release -r $Runtime --self-contained true -o "$ProjectRoot/build/windows-updater/$Runtime"
+if ($LASTEXITCODE -ne 0) { throw 'Windows native update helper build failed. Install the Visual Studio C++ desktop build tools.' }
+Copy-Item "$ProjectRoot/build/windows-updater/$Runtime/ChiikawaPet.Updater.exe" "$Destination/ChiikawaPet.Updater.exe" -Force
 Copy-Item "$ProjectRoot/windows/README.md" "$Destination/README.md" -Force
 Copy-Item "$ProjectRoot/windows/README.ko.md" "$Destination/README.ko.md" -Force
 Copy-Item "$ProjectRoot/LICENSE" "$Destination/LICENSE" -Force
 Copy-Item "$ProjectRoot/assets/NOTICE.md" "$Destination/ARTWORK-NOTICE.md" -Force
 Copy-Item "$ProjectRoot/VERSION" "$Destination/VERSION" -Force
+$InventoryName = '.chiikawa-managed-files.json'
+$Inventory = @(
+    Get-ChildItem -LiteralPath $Destination -Recurse -File |
+        Where-Object { $_.Name -ne $InventoryName } |
+        ForEach-Object { $_.FullName.Substring([IO.Path]::GetFullPath($Destination).Length + 1).Replace('\', '/') }
+    $InventoryName
+)
+[IO.File]::WriteAllText((Join-Path $Destination $InventoryName), (ConvertTo-Json -InputObject $Inventory -Compress), [Text.UTF8Encoding]::new($false))
 $ReleaseDirectory = Join-Path $ProjectRoot "build/release/windows/$Version"
 New-Item -ItemType Directory -Path $ReleaseDirectory -Force | Out-Null
 $Archive = Join-Path $ReleaseDirectory "ChiikawaPet-$Version-$Runtime.zip"

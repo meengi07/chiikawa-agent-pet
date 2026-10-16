@@ -19,6 +19,19 @@ internal static class Language
     }
     private static readonly (string Korean, string English)[] Words =
     [
+        ("업데이트하지 못했습니다. 네트워크와 앱 폴더 쓰기 권한을 확인하거나 공식 설치 파일로 다시 설치하세요.", "Update failed. Check your network and app-folder write access, or reinstall the official package."),
+        ("업데이트하지 못했습니다. 이전 버전을 복원했습니다.", "Update failed. The previous version was restored."),
+        ("자동 업데이트 꺼짐", "Automatic updates are off"),
+        ("자동 업데이트는 Windows x64에서만 지원합니다.", "Automatic updates support Windows x64 only."),
+        ("미리보기에서는 업데이트하지 않습니다.", "Updates are disabled in preview mode."),
+        ("새 버전을 설치하고 펫을 다시 시작할까요?", "Install the new version and restart your pet?"),
+        ("업데이트 다운로드 및 검증 중…", "Downloading and verifying update…"),
+        ("업데이트를 확인하지 않았습니다", "Updates have not been checked"),
+        ("업데이트 확인 중…", "Checking for updates…"),
+        ("새 업데이트가 있습니다", "An update is available"),
+        ("최신 버전입니다", "You’re up to date"),
+        ("업데이트 확인…", "Check for Updates…"),
+        ("자동 업데이트", "Automatic Updates"),
         ("Windows 터미널에서 codex login 후 새로고침하세요. Credential Manager 저장은 현재 지원하지 않습니다.", "Run codex login in a Windows terminal, then refresh. Credential Manager storage is not supported."),
         ("Claude 인증이 만료되었거나 사용량 권한이 없습니다. Claude Code에서 /login 후 다시 시도하세요.", "Claude authentication expired or lacks usage access. Use /login in Claude Code and retry."),
         ("펫 설정을 저장할 수 없습니다. %LOCALAPPDATA%\\ChiikawaPet 폴더의 쓰기 권한을 확인하세요.", "Cannot save settings. Check write access to %LOCALAPPDATA%\\ChiikawaPet."),

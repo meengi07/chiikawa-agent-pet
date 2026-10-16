@@ -115,4 +115,5 @@ try {
     Check(Settings.Load(languagePath).Language == "ko", "Language persists after restart");
 } finally { Directory.Delete(Path.GetDirectoryName(languagePath)!, recursive: true); }
 Language.Current = "en";
+checks += UpdateChecks.Run();
 Console.WriteLine($"Windows logic checks passed: {checks}");

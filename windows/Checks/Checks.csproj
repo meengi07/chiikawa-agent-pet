@@ -9,5 +9,10 @@
     <Compile Include="../Usage.cs" Link="Usage.cs" />
     <Compile Include="../Language.cs" Link="Language.cs" />
     <Compile Include="../Settings.cs" Link="Settings.cs" />
+    <Compile Include="../UpdateProtocol.cs" Link="UpdateProtocol.cs" />
+    <Compile Include="../UpdateApply.cs" Link="UpdateApply.cs" />
+    <Compile Include="../PortableUpdate.cs" Link="PortableUpdate.cs" />
+    <Compile Include="../Updates.cs" Link="Updates.cs" />
+    <EmbeddedResource Include="../../UPDATE_PUBLIC_KEY" LogicalName="UPDATE_PUBLIC_KEY" />
   </ItemGroup>
 </Project>

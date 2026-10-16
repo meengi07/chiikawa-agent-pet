@@ -11,6 +11,7 @@ internal sealed class Settings
     public double Scale { get; set; } = 0.65;
     public bool Visible { get; set; } = true;
     public bool Wanders { get; set; } = true;
+    public bool AutomaticUpdates { get; set; }
     public double? X { get; set; }
     public double? Y { get; set; }
 
