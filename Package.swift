@@ -12,7 +12,7 @@ let package = Package(
             path: ".",
             exclude: [
                 "build", "mac/Tests", "mac/Resources", "mac/README.md", "mac/README.ko.md",
-                "windows", "scripts", "docs",
+                "windows", "checks", "scripts", "docs",
                 "README.md", "README.ko.md", "CHANGELOG.md", "LICENSE", "VERSION", "Launch.command",
                 "assets/NOTICE.md"
             ].filter {

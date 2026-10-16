@@ -67,7 +67,7 @@ internal sealed class PetApp : Window
         if (!created) { MessageBox.Show(T("이미 실행 중입니다. 알림 영역의 펫 아이콘을 클릭하세요."), T("치이카와 펫")); return; }
         try
         {
-            var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+            var app = new Application { ShutdownMode = ShutdownMode.OnMainWindowClose };
             var window = new PetApp(preview);
             app.MainWindow = window;
             window.Show();
@@ -125,7 +125,7 @@ internal sealed class PetApp : Window
             petButton.CaptureMouse();
             mouse.Handled = true;
         };
-        petButton.MouseMove += (_, mouse) =>
+        petButton.PreviewMouseMove += (_, mouse) =>
         {
             if (!mouseDown) return;
             var current = PointToScreen(mouse.GetPosition(this));
@@ -551,5 +551,5 @@ internal sealed class PetApp : Window
         panel = null;
         openPanel?.Close();
     }
-    private void Quit() { Close(); Application.Current.Shutdown(); }
+    private void Quit() => Close();
 }

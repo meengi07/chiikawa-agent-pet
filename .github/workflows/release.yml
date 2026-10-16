@@ -52,6 +52,8 @@ jobs:
           dotnet-version: '10.0.x'
       - run: choco install nsis --yes --no-progress
       - run: ./scripts/package-windows.ps1
+      - name: Check Windows pet interactions
+        run: dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release
       - name: Check Windows installation
         shell: pwsh
         run: |
