@@ -6,6 +6,7 @@ GitHub Release. Published platform-specific history below remains unchanged.
 ## Unreleased
 
 - Read the current Claude macOS keychain item through the trusted `security` tool on each refresh before native fallback, preserving account-switcher compatibility without token caching or keychain writes ([#1](https://github.com/meengi07/chiikawa-agent-pet/issues/1)). Stop stalled tool reads after five seconds; locked or untrusted items can still request authorization.
+- Keep exhausted and finite over-limit Claude/Codex readings at 0% with the crying expression on both platforms instead of discarding the provider response; still reject negative and nonfinite usage ([#6](https://github.com/meengi07/chiikawa-agent-pet/issues/6)).
 
 ## 1.1.2 — 2026-10-15
 

@@ -11,11 +11,11 @@ struct QuotaWindow: Sendable, Equatable {
     let resetsAt: Date?
 
     init(title: String, usedPercent: Double, resetsAt: Date?) throws {
-        guard usedPercent.isFinite, (0...100).contains(usedPercent) else {
+        guard usedPercent.isFinite, usedPercent >= 0 else {
             throw UsageFailure.invalidResponse
         }
         self.title = title
-        self.remainingPercent = 100 - usedPercent
+        self.remainingPercent = max(0, 100 - usedPercent)
         self.resetsAt = resetsAt
     }
 }

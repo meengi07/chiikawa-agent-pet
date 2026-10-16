@@ -98,8 +98,10 @@ near the pointer and while the usage panel is open.
 
 ### Quotas and expressions
 
-Remaining quota is `100 − utilization`. The expression uses the lowest quota
-among successful, current provider readings, rather than a sum or average.
+Remaining quota is `max(0, 100 − utilization)`: exhausted or finite over-limit
+usage stays at 0% with the crying expression. Negative and nonfinite usage remains
+invalid. The expression uses the lowest quota among successful, current provider
+readings, rather than a sum or average.
 Displayed integers round down; expression thresholds use the original decimals.
 
 | Remaining quota | Expression |

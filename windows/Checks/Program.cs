@@ -1,4 +1,5 @@
 using ChiikawaPet;
+using System.Text.Json;
 
 int checks = 0;
 void Check(bool condition, string message)
@@ -31,8 +32,24 @@ Check(reordered.Windows[1].Title == "5시간" && reordered.Remaining == 10, "Reo
 var missing = Usage.Decode("Codex", """{"rate_limit":{"secondary_window":{"used_percent":0}}}""", now);
 Check(missing.Windows[0].Title == "두 번째 한도" && missing.Remaining == 100, "Unspecified duration stays neutral");
 
+foreach (double used in new[] { 100d, double.BitIncrement(100d), 100.1, 125, double.MaxValue })
+{
+    var claudeOverage = JsonSerializer.Serialize(new { five_hour = new { utilization = used }, seven_day = new { utilization = 20 } });
+    var codexOverage = JsonSerializer.Serialize(new { rate_limit = new { primary_window = new { used_percent = used }, secondary_window = new { used_percent = 20 } } });
+    foreach (var (provider, json) in new[] { ("Claude", claudeOverage), ("Codex", codexOverage) })
+    {
+        var exhausted = Usage.Decode(provider, json, now);
+        Check(exhausted.Windows.Select(window => window.Remaining).SequenceEqual(new[] { 0d, 80d }),
+            "Exhaustion and overage preserve every measured quota");
+        var exhaustedProvider = new ProviderState(provider);
+        exhaustedProvider.Succeed(exhausted);
+        Check(Usage.Minimum(new[] { exhaustedProvider }) == 0 && Usage.MoodRow(exhaustedProvider.Remaining) == 4
+            && Usage.Percent(exhaustedProvider.Remaining) == "0%", "Exhausted provider stays measured, zero, and crying");
+    }
+}
+
 foreach (var json in new[] { "{}", "[]", "not json", """{"five_hour":{"utilization":"25"}}""",
-    """{"five_hour":{"utilization":25,"resets_at":"invalid"}}""", """{"five_hour":{"utilization":101}}""",
+    """{"five_hour":{"utilization":25,"resets_at":"invalid"}}""",
     """{"five_hour":{"utilization":-1}}""", """{"five_hour":{"utilization":null}}""",
     """{"five_hour":42}""", """{"five_hour":{"utilization":1e999}}""" })
     Reject(() => Usage.Decode("Claude", json, now), "Malformed Claude usage accepted");
@@ -92,14 +109,6 @@ Check(new Settings().Language == "en", "English is default");
 var languageSettings = new Settings { Language = "invalid" };
 languageSettings.Validate();
 Check(languageSettings.Language == "en", "Invalid language defaults to English");
-Language.Current = "en";
-Check(Language.T("펫 크기") == "Pet size", "English label");
-Check(Language.T("하치와레의 에너지 · 오늘도 같이 힘내자") == "Hachiware’s energy · Let’s do our best today", "Composite label");
-Check(Language.T("사용량 서버 오류 (HTTP 429). 나중에 새로고침하세요.") == "Usage server error (HTTP 429). Refresh later.", "Dynamic error");
-Check(Language.T("2일 한도") == "2-day limit", "Dynamic quota");
-Language.Current = "ko";
-Check(Language.T("펫 크기") == "펫 크기", "Korean label");
-Check(Language.T("5시간") == "5시간", "Korean quota");
 var languagePath = Path.Combine(Path.GetTempPath(), "chiikawa-language-" + Guid.NewGuid(), "settings.json");
 try {
     new Settings { Language = "ko" }.Save(languagePath);

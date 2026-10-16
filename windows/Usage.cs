@@ -212,8 +212,8 @@ internal static class Usage
 
     private static Quota MakeQuota(string title, double used, DateTimeOffset? resets)
     {
-        if (!double.IsFinite(used) || used < 0 || used > 100) throw new InvalidOperationException(InvalidResponse);
-        return new Quota(title, 100 - used, resets);
+        if (!double.IsFinite(used) || used < 0) throw new InvalidOperationException(InvalidResponse);
+        return new Quota(title, Math.Max(0, 100 - used), resets);
     }
 
     private static JsonElement? Object(JsonElement parent, string key)

@@ -17,7 +17,20 @@ struct UsageTests {
         #expect(try QuotaWindow(title: "", usedPercent: 100, resetsAt: nil).remainingPercent == 0)
     }
 
-    @Test(arguments: [-0.1, 100.1, Double.nan, Double.infinity, -Double.infinity])
+    @Test(arguments: [100, 100.nextUp, 100.1, 125, Double.greatestFiniteMagnitude])
+    func exhaustedUsageRemainsMeasured(used: Double) throws {
+        let claude = try UsageClient.decodeClaude(
+            Data("{\"five_hour\":{\"utilization\":\(used)},\"seven_day\":{\"utilization\":20}}".utf8), now: now)
+        let codex = try UsageClient.decodeCodex(
+            Data("{\"rate_limit\":{\"primary_window\":{\"used_percent\":\(used)},\"secondary_window\":{\"used_percent\":20}}}".utf8), now: now)
+        for reading in [claude, codex] {
+            #expect(reading.windows.map(\.remainingPercent) == [0, 80])
+            #expect(reading.remainingPercent == 0)
+            #expect(PetMood.forRemaining(reading.remainingPercent) == .crying)
+        }
+    }
+
+    @Test(arguments: [-0.1, Double.nan, Double.infinity, -Double.infinity])
     func invalidPercentages(used: Double) {
         #expect(throws: UsageFailure.self) {
             try QuotaWindow(title: "주간", usedPercent: used, resetsAt: nil)
@@ -43,7 +56,7 @@ struct UsageTests {
         #expect(reading.windows[0].resetsAt == nil)
     }
 
-    @Test(arguments: ["{}", #"{"five_hour":null,"seven_day":null}"#, #"{"five_hour":{}}"#, #"{"five_hour":{"utilization":"25"}}"#, #"{"five_hour":{"utilization":25,"resets_at":"invalid"}}"#, #"{"five_hour":{"utilization":0},"seven_day_sonnet":{"utilization":101}}"#])
+    @Test(arguments: ["{}", #"{"five_hour":null,"seven_day":null}"#, #"{"five_hour":{}}"#, #"{"five_hour":{"utilization":"25"}}"#, #"{"five_hour":{"utilization":25,"resets_at":"invalid"}}"#, #"{"five_hour":{"utilization":0},"seven_day_sonnet":{"utilization":-0.1}}"#])
     func claudeRejectsMissingOrMalformedUsage(json: String) {
         #expect(throws: UsageFailure.self) { try UsageClient.decodeClaude(Data(json.utf8), now: now) }
     }
