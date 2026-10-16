@@ -37,6 +37,9 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 트레이와 사용량 조회는 유지합니다. 미리보기에서는 설정을 저장하지 않습니다.
 앱을 제거해도 별도 위치에 저장된 설정과 CLI 로그인 정보는 보존합니다.
 
+펫 창에서 Alt+F4를 누르면 앱을 종료하고 실행 잠금을 해제합니다. 시작 메뉴에서
+다시 실행할 수 있습니다. 종료하지 않고 숨기려면 트레이에서 화면에 펫 표시를 끄세요.
+
 ## 계정 연결
 
 - Claude: Windows에 설치된 Claude Code에서 `/login`하세요. `%USERPROFILE%\.claude\.credentials.json`을 읽습니다.
@@ -82,9 +85,18 @@ dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained
 .\build\windows\win-x64\ChiikawaPet.exe --preview 10 --show-usage
 ```
 
-로직 검사는 실제 로그인 대신 고정된 예시 데이터로 실행합니다. 투명 배경·애니메이션,
-클릭과 드래그 구분, 트레이에서 복원, 실제 계정 조회, 혼합 DPI, 설정 복원,
-설치·제거 동작은 Windows에서 확인해야 합니다.
+로직 검사는 실제 로그인 대신 고정된 예시 데이터를 사용합니다. 실제 Windows 데스크톱에서
+기존 펫을 종료한 뒤 저장소 루트에서 UI 검사를 실행할 수 있습니다.
+
+```powershell
+dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release
+```
+
+실제 마우스 클릭·드래그, DPI를 반영한 이동, 위치 저장·복원, 캡처 해제, WPF Space 입력,
+숨김·트레이·다시 표시, 창 닫기, 프로세스·실행 잠금 정리와 재실행을 확인합니다.
+설정은 백업 후 복원하며 인증 정보를 읽거나 사용량 API를 호출하지 않습니다.
+CI에서는 설치·미리보기 실행·제거도 검사합니다. 외형·애니메이션·실제 계정 조회·혼합 DPI는
+Windows에서 직접 확인해야 합니다.
 
 ## 라이선스
 

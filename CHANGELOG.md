@@ -7,6 +7,9 @@ GitHub Release. Published platform-specific history below remains unchanged.
 
 - Read the current Claude macOS keychain item through the trusted `security` tool on each refresh before native fallback, preserving account-switcher compatibility without token caching or keychain writes ([#1](https://github.com/meengi07/chiikawa-agent-pet/issues/1)). Stop stalled tool reads after five seconds; locked or untrusted items can still request authorization.
 - Keep exhausted and finite over-limit Claude/Codex readings at 0% with the crying expression on both platforms instead of discarding the provider response; still reject negative and nonfinite usage ([#6](https://github.com/meengi07/chiikawa-agent-pet/issues/6)).
+- Restore Windows drag handling before the button consumes mouse-move events, preserving click-versus-drag behavior and saved positions ([#4](https://github.com/meengi07/chiikawa-agent-pet/issues/4)).
+- Exit Windows fully when the main pet window closes, releasing the single-instance mutex so the pet can be started again; explicit hiding still retains the tray ([#5](https://github.com/meengi07/chiikawa-agent-pet/issues/5)).
+- Add native Windows UI smoke coverage for dragging, persistence, capture loss, keyboard activation, hiding, close cleanup, and relaunch alongside the installer checks.
 
 ## 1.1.2 — 2026-10-15
 

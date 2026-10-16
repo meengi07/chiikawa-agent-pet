@@ -37,6 +37,11 @@ The choice is applied immediately and saved for the next launch.
 Preferences are stored in `%LOCALAPPDATA%\ChiikawaPet\settings.json`.
 Saved positions are clamped onto the current monitor layout at startup.
 Hiding the pet stops animation while retaining tray controls and quota refresh.
+
+Closing the main pet window, including with Alt+F4, exits the app and releases its
+single-instance lock. Start it again from the Start menu. Use the tray visibility
+control to hide the pet without quitting.
+
 Preview mode does not save preference changes. Uninstalling leaves preferences
 and CLI credentials in their separate locations.
 
@@ -87,9 +92,19 @@ Quit the running pet before previewing. Preview mode performs no quota requests.
 .\build\windows\win-x64\ChiikawaPet.exe --preview 10 --show-usage
 ```
 
-Logic checks use fixtures rather than real credentials. Validate transparency,
-animation, click-versus-drag behavior, tray restoration, real account refresh,
-mixed-DPI monitors, preference restoration, and install/uninstall on Windows.
+Logic checks use fixtures rather than real credentials. On an interactive Windows
+desktop, quit the running pet and run the native UI smoke from the repository root:
+
+```powershell
+dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release
+```
+
+It checks native mouse click/drag, DPI-adjusted movement, saved and reloaded
+coordinates, capture loss, routed Space activation, hide/tray/show, native window
+close, process/mutex cleanup, and relaunch. It backs up and restores settings and
+does not read credentials or call quota endpoints. CI also verifies installation,
+preview startup, and uninstall. Visual appearance, animation, real account refresh,
+and mixed-DPI monitors still require manual Windows verification.
 
 ## License
 
