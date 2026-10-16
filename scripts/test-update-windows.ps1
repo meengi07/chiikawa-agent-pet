@@ -169,6 +169,10 @@ function Apply-Update([string]$Target, [bool]$Installed, [string]$Asset, [bool]$
     }
     Require ($Helper.WaitForExit(240000)) 'Apply helper timed out.'
     $Helper.Refresh()
+    if (!(Test-Path -LiteralPath (Join-Path $Session 'result'))) {
+        $Detail = Get-Content -LiteralPath (Join-Path $Session 'error') -Raw -ErrorAction SilentlyContinue
+        throw "Apply helper exited $($Helper.ExitCode) without an outcome: $Detail"
+    }
     $Result = Get-Content -LiteralPath (Join-Path $Session 'result') -Raw
     $Expected = if ($Rollback) { $PreviousVersion } else { $Version }
     Require ((App-Version $Target) -eq $Expected) 'Target version after apply/rollback is incorrect.'

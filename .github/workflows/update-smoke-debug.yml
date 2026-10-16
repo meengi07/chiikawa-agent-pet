@@ -1,0 +1,36 @@
+name: Update smoke diagnostic
+on:
+  push:
+    branches: [feature/PET-1]
+    paths:
+      - .github/workflows/update-smoke-debug.yml
+      - scripts/test-update-windows.ps1
+permissions:
+  contents: read
+  actions: read
+jobs:
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: signed-release
+          path: release
+          run-id: 38888900603
+          github-token: ${{ github.token }}
+      - name: Exercise authenticated existing packages with current smoke driver
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release download v1.1.6 --pattern 'ChiikawaPet-1.1.6-win-x64*' --dir previous
+          $inputs = @{
+            Manifest = './release/updates.json'
+            Signature = './release/updates.sig'
+            Package = './release/ChiikawaPet-1.2.0-win-x64.zip'
+            Installer = './release/ChiikawaPet-1.2.0-win-x64-setup.exe'
+            PreviousPortable = './previous/ChiikawaPet-1.1.6-win-x64.zip'
+            PreviousInstaller = './previous/ChiikawaPet-1.1.6-win-x64-setup.exe'
+          }
+          ./scripts/test-update-windows.ps1 @inputs
