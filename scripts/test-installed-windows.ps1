@@ -47,12 +47,23 @@ function Assert-Removed {
     if (Test-Path $Shortcuts) { throw 'Uninstall did not remove Start menu shortcuts.' }
 }
 
-function Assert-MutexGuard([string]$Path) {
+function Assert-MutexGuard([string]$Path, [switch]$Uninstall) {
     $Guard = [Threading.Mutex]::new($false, 'Local\ChiikawaAgentPet')
+    $Blocked = $null
     try {
         $Blocked = Start-Process -FilePath $Path -ArgumentList '/S' -Wait -PassThru
-        if ($Blocked.ExitCode -eq 0) { throw 'Installer/uninstaller ignored the running-pet mutex.' }
-    } finally { $Guard.Dispose() }
+        if ($Uninstall) {
+            # NSIS's self-copy launcher can return 0 when the temporary uninstaller aborts.
+            if (-not (Test-Path $Executable) -or -not (Test-Path $RegistryKey)) {
+                throw 'Blocked uninstall changed the installation.'
+            }
+        } elseif ($Blocked.ExitCode -eq 0) {
+            throw 'Installer ignored the running-pet mutex.'
+        }
+    } finally {
+        if ($null -ne $Blocked) { $Blocked.Dispose() }
+        $Guard.Dispose()
+    }
 }
 
 try {
@@ -77,8 +88,7 @@ try {
     dotnet run --no-build --project $UiProject --configuration Release -- --executable $Executable
     if ($LASTEXITCODE -ne 0) { throw 'Installed executable click/drag verification failed.' }
     Assert-Preserved
-    Assert-MutexGuard $Uninstaller
-    if (-not (Test-Path $Executable) -or -not (Test-Path $RegistryKey)) { throw 'Blocked uninstall changed the installation.' }
+    Assert-MutexGuard $Uninstaller -Uninstall
     $BeforeUninstall = [Convert]::ToBase64String([IO.File]::ReadAllBytes($SettingsPath))
     dotnet run --no-build --project $UiProject --configuration Release -- --uninstaller $Uninstaller $ScreenshotsDirectory
     if ($LASTEXITCODE -ne 0) { throw 'Native uninstall wizard verification failed.' }
