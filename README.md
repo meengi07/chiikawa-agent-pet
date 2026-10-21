@@ -38,15 +38,15 @@ still experimental; see [known limitations](#privacy-and-known-limitations).
 
 ## Installation
 
-Download macOS and Windows packages from the same [v1.2.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0).
-Both platforms use the shared version `1.2.0`; the release's single `SHA256SUMS` covers all four packages below.
+Download macOS and Windows packages from the same [v1.2.1 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.1).
+Both platforms use the shared version `1.2.1`; the release's single `SHA256SUMS` covers all four packages below.
 
 | Platform | Package | Installation |
 |---|---|---|
-| macOS 14+, Apple Silicon | `ChiikawaPet-1.2.0-mac-arm64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
-| macOS 14+, Intel | `ChiikawaPet-1.2.0-mac-x86_64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
-| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64-setup.exe` | Follow the illustrated wizard; launch on Finish or from the Start menu. |
-| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
+| macOS 14+, Apple Silicon | `ChiikawaPet-1.2.1-mac-arm64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
+| macOS 14+, Intel | `ChiikawaPet-1.2.1-mac-x86_64.dmg` | Open the DMG and drag the app onto the Applications shortcut on the right. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.1-win-x64-setup.exe` | Follow the illustrated wizard; launch on Finish or from the Start menu. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.1-win-x64.zip` | Extract **all** files and run `ChiikawaPet.exe`. |
 
 The Windows packages include .NET. The installer uses the current user's
 `%LOCALAPPDATA%\Programs\ChiikawaPet` directory and adds an uninstall entry.
@@ -109,7 +109,7 @@ at startup and every six hours, then install and restart automatically. The opti
 is saved. Turning it off before installation cancels automatic application.
 Preview mode never checks or downloads app updates.
 
-**Install 1.2.0 manually once if you are on 1.1.6 or earlier**; those versions
+**Install 1.2.1 manually once if you are on 1.1.6 or earlier**; those versions
 do not have an updater. On Mac, install into `/Applications`, not the mounted DMG.
 Updates are authenticated with a pinned release key and SHA-256 before use.
 This app-specific signature is not Apple notarization or Windows code signing;

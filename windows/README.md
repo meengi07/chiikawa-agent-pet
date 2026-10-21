@@ -8,15 +8,15 @@ Chiikawa, Hachiware, Usagi, and Momonga sprites.
 ## Installation
 
 Download Windows packages from the shared
-[v1.2.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0).
+[v1.2.1 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.1).
 Its single `SHA256SUMS` covers the two Windows packages and both macOS DMGs.
-Run `ChiikawaPet-1.2.0-win-x64-setup.exe` to install for the current user and add
+Run `ChiikawaPet-1.2.1-win-x64-setup.exe` to install for the current user and add
 Start-menu shortcuts and an uninstall entry. No administrator access is required.
 The wizard has a cream/pastel theme, all four characters, and a matching app icon.
 On Finish, leave **Launch Chiikawa Pet** checked to start immediately, or clear it
 and launch later from the Start menu. Korean Windows uses Korean installer text;
 other Windows UI languages use English. Uninstall preserves preferences and CLI sign-in files.
-Alternatively, extract **all** files from `ChiikawaPet-1.2.0-win-x64.zip` and run
+Alternatively, extract **all** files from `ChiikawaPet-1.2.1-win-x64.zip` and run
 `ChiikawaPet.exe`. Both packages include .NET; do not move the portable EXE away
 from its DLLs and other files. Packages currently have no code-signing certificate.
 
@@ -64,7 +64,7 @@ off before installation to cancel automatic application. Previews never check or
 download updates. In-app updates support x64 Windows only.
 Keep `ChiikawaPet.Updater.exe` and `.chiikawa-managed-files.json` with the app.
 
-Install 1.2.0 manually once when upgrading from 1.1.6 or earlier.
+Install 1.2.1 manually once when upgrading from 1.1.6 or earlier.
 Pinned-key release signatures and SHA-256 authenticate updates; they are not a
 Windows code-signing certificate and do not remove SmartScreen warnings.
 
@@ -94,7 +94,7 @@ for the native-AOT updater, then run from the repository root:
 
 The root [VERSION](../VERSION) sets the version for both Windows and macOS.
 The script runs logic checks and writes the app to `build\windows\win-x64` and
-the ZIP to `build\release\windows\1.2.0`. ARM64 source builds require the matching
+the ZIP to `build\release\windows\1.2.1`. ARM64 source builds require the matching
 MSVC toolchain and `-Runtime win-arm64`; in-app updates are x64-only.
 On Windows, the script generates installer BMPs and a multi-size ICO from the
 existing sprites using built-in System.Drawing, then embeds that icon in the app.
@@ -140,7 +140,7 @@ Both restore settings and avoid real credentials or quota requests.
 On a clean Windows desktop, run the full installer check:
 
 ```powershell
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.0\ChiikawaPet-1.2.0-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.1\ChiikawaPet-1.2.1-win-x64-setup.exe
 ```
 
 This drives the real install/uninstall wizards, checks finish-page launch, ordinary

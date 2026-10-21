@@ -6,15 +6,15 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 
 ## 설치
 
-공통 [v1.2.0 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0)에서 배포 파일을 받습니다.
+공통 [v1.2.1 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.1)에서 배포 파일을 받습니다.
 단일 `SHA256SUMS`에 두 Windows 배포 파일과 두 macOS DMG의 체크섬을 함께 담습니다.
-`ChiikawaPet-1.2.0-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
+`ChiikawaPet-1.2.1-win-x64-setup.exe`를 실행하면 현재 사용자에게 설치하고
 시작 메뉴 바로가기와 앱 제거 항목을 추가합니다. 관리자 권한은 필요하지 않습니다.
 설치 화면은 크림색·파스텔 배경, 네 도트 캐릭터와 전용 앱 아이콘으로 꾸몄습니다.
 완료 화면의 **Chiikawa Pet 실행**을 선택하면 바로 실행하고, 해제하면 시작 메뉴에서
 나중에 실행할 수 있습니다. Windows 표시 언어가 한국어면 한국어, 그 외에는 영어로
 안내합니다. 앱을 제거해도 펫 설정과 CLI 로그인 파일은 보존합니다.
-포터블 버전은 `ChiikawaPet-1.2.0-win-x64.zip`을 **모두 압축 해제**한 뒤
+포터블 버전은 `ChiikawaPet-1.2.1-win-x64.zip`을 **모두 압축 해제**한 뒤
 `ChiikawaPet.exe`를 실행합니다. 두 배포본에는 .NET이 포함됩니다.
 포터블 EXE를 DLL 등 다른 파일과 분리하지 마세요. 현재 공인 코드 서명은 없습니다.
 
@@ -57,7 +57,7 @@ Windows 10/11용 C#·.NET 10·WPF 앱입니다. 공용 치이카와·하치와�
 취소합니다. 미리보기에서는 조회·다운로드하지 않습니다. 앱 내부 업데이트는 Windows x64만
 지원합니다. `ChiikawaPet.Updater.exe`와 `.chiikawa-managed-files.json`을 앱과 함께 유지하세요.
 
-1.1.6 이하에서는 1.2.0을 한 번 직접 설치해야 합니다. 고정한 공개키의 릴리즈 서명과
+1.1.6 이하에서는 1.2.1을 한 번 직접 설치해야 합니다. 고정한 공개키의 릴리즈 서명과
 SHA-256으로 검증하지만 Windows 코드 서명 인증서는 아니므로 SmartScreen 경고는 남습니다.
 
 ## 계정 연결
@@ -83,7 +83,7 @@ SHA-256으로 검증하지만 Windows 코드 서명 인증서는 아니므로 Sm
 ```
 
 루트 [VERSION](../VERSION)을 Windows와 macOS의 공통 버전으로 사용합니다.
-로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.2.0`에 ZIP을 만듭니다.
+로직 검사 후 `build\windows\win-x64`에 앱을, `build\release\windows\1.2.1`에 ZIP을 만듭니다.
 Windows 기본 System.Drawing으로 기존 스프라이트에서 설치 배경 BMP와 다중 크기 ICO를
 만들고 앱에 아이콘을 넣습니다. 생성 이미지는 `build\windows-artwork`에 저장하며
 별도 이미지 도구나 모듈은 필요하지 않습니다.
@@ -128,7 +128,7 @@ dotnet run --project checks/windows-ui/UiSmoke.csproj --configuration Release --
 기존 설치가 없는 Windows 데스크톱에서는 전체 설치 검사를 실행할 수 있습니다.
 
 ```powershell
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.0\ChiikawaPet-1.2.0-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.1\ChiikawaPet-1.2.1-win-x64-setup.exe
 ```
 
 실제 설치·제거 화면, 완료 후 실행, 설치된 EXE의 일반 입력, 설정·인증 파일 보존,

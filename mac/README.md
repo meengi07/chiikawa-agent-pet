@@ -7,9 +7,9 @@ AppKit, and SwiftUI and runs from the menu bar without a Dock icon.
 
 ## Installation
 
-Download `ChiikawaPet-1.2.0-mac-arm64.dmg` for Apple Silicon or
-`ChiikawaPet-1.2.0-mac-x86_64.dmg` for Intel from the shared
-[v1.2.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0).
+Download `ChiikawaPet-1.2.1-mac-arm64.dmg` for Apple Silicon or
+`ChiikawaPet-1.2.1-mac-x86_64.dmg` for Intel from the shared
+[v1.2.1 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.1).
 Its single `SHA256SUMS` covers both DMGs and both Windows packages.
 Open the DMG and drag `ChiikawaPet.app` from the left onto the Applications
 shortcut on the right, following the arrow. Launch `/Applications/ChiikawaPet.app`.
@@ -54,7 +54,7 @@ Disable it before installation to cancel automatic application. Previews never c
 or download updates. Packages use a pinned release key and SHA-256; this does not
 provide Apple Developer ID signing or notarization.
 
-Versions 1.1.6 and earlier have no updater: install 1.2.0 manually once.
+Versions 1.1.6 and earlier have no updater: install 1.2.1 manually once.
 
 ## Accounts
 
@@ -112,7 +112,7 @@ not the system Python. Finder does not need to run during packaging.
 do not install it.
 
 The root [VERSION](../VERSION) sets the version for both macOS and Windows.
-Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.2.0/`.
+Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.2.1/`.
 Quit the running app before trying a preview, which performs no account requests:
 
 ```sh

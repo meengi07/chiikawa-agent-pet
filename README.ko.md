@@ -38,15 +38,15 @@ macOS와 Windows에서 화면 위에 떠다니는 비공식 도트 펫입니다.
 
 ## 설치
 
-macOS와 Windows 배포 파일은 하나의 [v1.2.0 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0)에서 받습니다.
-두 OS 모두 공통 버전 `1.2.0`을 사용하며, 릴리즈의 단일 `SHA256SUMS`에 아래 네 파일의 체크섬을 담습니다.
+macOS와 Windows 배포 파일은 하나의 [v1.2.1 릴리즈](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.1)에서 받습니다.
+두 OS 모두 공통 버전 `1.2.1`을 사용하며, 릴리즈의 단일 `SHA256SUMS`에 아래 네 파일의 체크섬을 담습니다.
 
 | 플랫폼 | 배포 파일 | 설치 방법 |
 |---|---|---|
-| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.2.0-mac-arm64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
-| macOS 14 이상, Intel | `ChiikawaPet-1.2.0-mac-x86_64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
-| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64-setup.exe` | 캐릭터 설치 화면의 안내를 따르고, 완료 화면이나 시작 메뉴에서 펫을 실행합니다. |
-| Windows 10/11, x64 | `ChiikawaPet-1.2.0-win-x64.zip` | **모든 파일을 압축 해제**한 뒤 `ChiikawaPet.exe`를 실행합니다. |
+| macOS 14 이상, Apple Silicon | `ChiikawaPet-1.2.1-mac-arm64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
+| macOS 14 이상, Intel | `ChiikawaPet-1.2.1-mac-x86_64.dmg` | DMG를 열고 앱을 오른쪽 응용 프로그램 폴더로 드래그합니다. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.1-win-x64-setup.exe` | 캐릭터 설치 화면의 안내를 따르고, 완료 화면이나 시작 메뉴에서 펫을 실행합니다. |
+| Windows 10/11, x64 | `ChiikawaPet-1.2.1-win-x64.zip` | **모든 파일을 압축 해제**한 뒤 `ChiikawaPet.exe`를 실행합니다. |
 
 Windows 배포본에는 .NET이 포함됩니다. 설치 프로그램은 현재 사용자의
 `%LOCALAPPDATA%\Programs\ChiikawaPet`에 설치하고 앱 제거 항목을 추가합니다.
@@ -106,7 +106,7 @@ macOS 메뉴바 또는 Windows 트레이 메뉴에서 **업데이트 확인…**
 새 버전을 확인해 자동 설치·재실행하며, 선택은 다음 실행에도 유지합니다.
 설치 전에 옵션을 끄면 자동 적용을 취소합니다. 미리보기에서는 업데이트를 조회하거나 내려받지 않습니다.
 
-**1.1.6 이하에서는 1.2.0을 한 번 직접 설치해야 합니다.** 이전 버전에는 업데이터가 없습니다.
+**1.1.6 이하에서는 1.2.1을 한 번 직접 설치해야 합니다.** 이전 버전에는 업데이터가 없습니다.
 Mac은 DMG 안이 아닌 `/Applications`에 설치하세요. 다운로드는 앱에 고정한 릴리즈 공개키와
 SHA-256으로 검증합니다. 이 자체 서명은 Apple 공증·Windows 코드 서명이 아니므로
 OS 보안 경고는 남을 수 있습니다. 차등 패치가 아닌 전체 패키지 교체 방식입니다.
