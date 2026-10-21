@@ -6,23 +6,34 @@ import Security
 
 actor UsageClient: UsageFetching {
     private let session: URLSession
+    private let homeDirectory: URL
+    private let environment: [String: String]
+    private var verifiedClaudeAccount: VerifiedClaudeAccount?
 
-    init() {
+    init(session: URLSession? = nil,
+         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+         environment: [String: String] = ProcessInfo.processInfo.environment) {
+        self.homeDirectory = homeDirectory
+        self.environment = environment
+        if let session {
+            self.session = session
+            return
+        }
         let configuration = URLSessionConfiguration.ephemeral
         configuration.timeoutIntervalForRequest = 20
         configuration.timeoutIntervalForResource = 20
         configuration.httpCookieStorage = nil
         configuration.urlCredentialStorage = nil
         configuration.urlCache = nil
-        session = URLSession(configuration: configuration)
+        self.session = URLSession(configuration: configuration)
     }
 
     func fetch(_ provider: UsageProvider, allowKeychainPrompt: Bool) async throws -> UsageReading {
         let request: URLRequest
         switch provider {
         case .claude:
-            let token = try claudeToken(allowKeychainPrompt: allowKeychainPrompt)
-            request = makeRequest(url: "https://api.anthropic.com/api/oauth/usage", token: token)
+            let access = try claudeAccess(allowKeychainPrompt: allowKeychainPrompt)
+            return try await fetchClaude(token: access.token, useSwapCache: access.useSwapCache)
         case .codex:
             let tokens = try codexTokens(allowKeychainPrompt: allowKeychainPrompt)
             var codexRequest = makeRequest(url: "https://chatgpt.com/backend-api/wham/usage", token: tokens.accessToken)
@@ -31,17 +42,68 @@ actor UsageClient: UsageFetching {
             codexRequest.setValue("https://chatgpt.com/", forHTTPHeaderField: "Referer")
             request = codexRequest
         }
+        let data = try await usageData(for: request, provider: provider)
+        return try Self.decodeCodex(data, now: Date())
+    }
+
+    private func usageData(for request: URLRequest, provider: UsageProvider) async throws -> Data {
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw UsageFailure.invalidResponse }
         switch response.statusCode {
-        case 200...299: break
+        case 200...299: return data
         case 401, 403: throw UsageFailure.unauthorized(provider)
         default: throw UsageFailure.http(response.statusCode)
         }
-        let now = Date()
-        switch provider {
-        case .claude: return try Self.decodeClaude(data, now: now)
-        case .codex: return try Self.decodeCodex(data, now: now)
+    }
+
+    func fetchClaude(token: String, useSwapCache: Bool) async throws -> UsageReading {
+        var account: VerifiedClaudeAccount?
+        if useSwapCache, let cache = swapCache() {
+            account = await verifyClaudeAccount(token: token)
+            let now = Date()
+            if let account, let reading = cache.reading(email: account.email, organizationUUID: account.organizationUUID, now: now),
+               now.timeIntervalSince(reading.fetchedAt) < 15 * 60 {
+                return reading
+            }
+        }
+        let request = makeRequest(url: "https://api.anthropic.com/api/oauth/usage", token: token)
+        do {
+            let data = try await usageData(for: request, provider: .claude)
+            return try Self.decodeClaude(data, now: Date())
+        } catch UsageFailure.http(429) {
+            if let account, let cache = swapCache(),
+               let reading = cache.reading(email: account.email, organizationUUID: account.organizationUUID, now: Date()) {
+                return reading
+            }
+            throw UsageFailure.http(429)
+        }
+    }
+
+    private func swapCache() -> ClaudeSwapCache? {
+        let path = homeDirectory.appendingPathComponent(".claude-swap-backup/cache/usage.json")
+        guard let data = try? Data(contentsOf: path),
+              let cache = try? JSONDecoder().decode(ClaudeSwapCache.self, from: data),
+              cache.schemaVersion == 2, cache.accounts.values.contains(where: { $0.lastGood != nil }) else { return nil }
+        return cache
+    }
+
+    private func verifyClaudeAccount(token: String) async -> VerifiedClaudeAccount? {
+        if let account = verifiedClaudeAccount, account.token == token { return account }
+        verifiedClaudeAccount = nil
+        // Config identity can lag a switch; only the same token's profile proves ownership.
+        let request = makeRequest(url: "https://api.anthropic.com/api/oauth/profile", token: token)
+        do {
+            let data = try await usageData(for: request, provider: .claude)
+            let profile = try JSONDecoder().decode(ClaudeProfile.self, from: data)
+            guard let uuid = profile.account?.uuid, !uuid.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  let email = profile.account?.email, !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  let organizationUUID = profile.organization?.uuid,
+                  !organizationUUID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+            let account = VerifiedClaudeAccount(token: token, email: email, organizationUUID: organizationUUID)
+            verifiedClaudeAccount = account
+            return account
+        } catch {
+            return nil
         }
     }
 
@@ -50,7 +112,7 @@ actor UsageClient: UsageFetching {
         request.httpMethod = "GET"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if url == "https://api.anthropic.com/api/oauth/usage" {
+        if url.hasPrefix("https://api.anthropic.com/api/oauth/") {
             request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
             request.setValue("claude-code", forHTTPHeaderField: "User-Agent")
         } else {
@@ -60,11 +122,11 @@ actor UsageClient: UsageFetching {
     }
 
     private func configDirectory(variable: String, defaultName: String) -> URL {
-        if let configured = ProcessInfo.processInfo.environment[variable], !configured.isEmpty {
+        if let configured = environment[variable], !configured.isEmpty {
             let expanded = NSString(string: configured).expandingTildeInPath
             return URL(fileURLWithPath: expanded, isDirectory: true).standardizedFileURL
         }
-        return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(defaultName, isDirectory: true)
+        return homeDirectory.appendingPathComponent(defaultName, isDirectory: true)
     }
 
     private func credentialFile(_ path: URL) throws -> Data? {
@@ -75,21 +137,23 @@ actor UsageClient: UsageFetching {
         }
     }
 
-    private func claudeToken(allowKeychainPrompt: Bool) throws -> String {
+    private func claudeAccess(allowKeychainPrompt: Bool) throws -> ClaudeAccess {
         let directory = configDirectory(variable: "CLAUDE_CONFIG_DIR", defaultName: ".claude")
         let path = directory.appendingPathComponent(".credentials.json")
         if let data = try credentialFile(path), let token = try Self.parseClaudeCredential(data) {
-            return token
+            return ClaudeAccess(token: token, useSwapCache: false)
         }
-        let defaultDirectory = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude", isDirectory: true)
+        let defaultDirectory = homeDirectory.appendingPathComponent(".claude", isDirectory: true)
         guard directory.resolvingSymlinksInPath().standardizedFileURL == defaultDirectory.resolvingSymlinksInPath().standardizedFileURL else {
             throw UsageFailure.loginRequired(.claude)
         }
         if let output = Self.claudeSecurityOutput(), let token = try Self.claudeToken(fromSecurityOutput: output) {
-            return token
+            return ClaudeAccess(token: token, useSwapCache: true)
         }
         let data = try keychainCredential(service: "Claude Code-credentials", account: nil, allowPrompt: allowKeychainPrompt)
-        if let data, let token = try Self.parseClaudeCredential(data) { return token }
+        if let data, let token = try Self.parseClaudeCredential(data) {
+            return ClaudeAccess(token: token, useSwapCache: true)
+        }
         throw UsageFailure.loginRequired(.claude)
     }
 
@@ -275,7 +339,7 @@ actor UsageClient: UsageFetching {
         return UsageReading(provider: .codex, windows: windows, fetchedAt: now)
     }
 
-    private nonisolated static func parseReset(_ text: String?) throws -> Date? {
+    fileprivate nonisolated static func parseReset(_ text: String?) throws -> Date? {
         guard let text else { return nil }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -283,6 +347,94 @@ actor UsageClient: UsageFetching {
         formatter.formatOptions = [.withInternetDateTime]
         guard let date = formatter.date(from: text) else { throw UsageFailure.invalidResponse }
         return date
+    }
+}
+
+private struct ClaudeAccess {
+    let token: String
+    let useSwapCache: Bool
+}
+
+private struct VerifiedClaudeAccount {
+    let token: String
+    let email: String
+    let organizationUUID: String
+}
+
+private struct ClaudeProfile: Decodable {
+    let account: Account?
+    let organization: Organization?
+    struct Account: Decodable {
+        let uuid: String?
+        let email: String?
+    }
+    struct Organization: Decodable {
+        let uuid: String?
+    }
+}
+
+struct ClaudeSwapCache: Decodable {
+    let schemaVersion: Int
+    fileprivate let accounts: [String: Account]
+
+    func reading(email: String, organizationUUID: String, now: Date) -> UsageReading? {
+        guard schemaVersion == 2, !email.isEmpty, !organizationUUID.isEmpty else { return nil }
+        var matching: Account?
+        for account in accounts.values where account.email == email && account.organizationUuid == organizationUUID {
+            guard matching == nil else { return nil }
+            matching = account
+        }
+        guard let account = matching, let fetchedAt = account.fetchedAt, fetchedAt.isFinite,
+              let usage = account.lastGood else { return nil }
+        let measuredAt = Date(timeIntervalSince1970: fetchedAt)
+        let age = now.timeIntervalSince(measuredAt)
+        guard age >= 0, age <= 60 * 60 else { return nil }
+        var candidates: [(String, Window?)] = [("5시간", usage.fiveHour), ("주간", usage.sevenDay)]
+        for window in usage.scoped ?? [] {
+            guard let name = window.name, !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+            candidates.append(("\(name) 주간", window))
+        }
+        var windows: [QuotaWindow] = []
+        do {
+            for (title, measured) in candidates {
+                guard let measured else { continue }
+                let reset = try UsageClient.parseReset(measured.resetsAt)
+                // Even a recent sample belongs to the previous window after a reset.
+                if let reset, reset <= now { return nil }
+                let window = try QuotaWindow(title: title, usedPercent: measured.pct, resetsAt: reset)
+                windows.append(window)
+            }
+        } catch {
+            return nil
+        }
+        guard !windows.isEmpty else { return nil }
+        return UsageReading(provider: .claude, windows: windows, fetchedAt: measuredAt)
+    }
+
+    fileprivate struct Account: Decodable {
+        let email: String
+        let organizationUuid: String
+        let fetchedAt: Double?
+        let lastGood: Usage?
+    }
+    fileprivate struct Usage: Decodable {
+        let fiveHour: Window?
+        let sevenDay: Window?
+        let scoped: [Window]?
+        enum CodingKeys: String, CodingKey {
+            case fiveHour = "five_hour"
+            case sevenDay = "seven_day"
+            case scoped
+        }
+    }
+    fileprivate struct Window: Decodable {
+        let pct: Double
+        let resetsAt: String?
+        let name: String?
+        enum CodingKeys: String, CodingKey {
+            case pct, name
+            case resetsAt = "resets_at"
+        }
     }
 }
 

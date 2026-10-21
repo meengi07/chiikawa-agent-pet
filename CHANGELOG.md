@@ -6,6 +6,8 @@ GitHub Release. Published platform-specific history below remains unchanged.
 ## Unreleased
 
 - Refine Usagi across all 48 shared sprite frames: thin, tapered eyebrows that remain connected at menu-bar size, round highlighted eyes, a compact character-style mouth, short blush hatching, and pooled tears. Preserve the silhouette, six moods, and blink animation on macOS and Windows.
+- Reuse the macOS claude-swap schema-2 usage cache for verified default-keychain accounts to reduce Claude HTTP 429 errors ([#7](https://github.com/meengi07/chiikawa-agent-pet/issues/7), thanks to [@GooTec's investigation in #3](https://github.com/meengi07/chiikawa-agent-pet/pull/3)). Verify account ownership through the same token's OAuth profile, match email and organization, and reject ambiguous rows, future timestamps, invalid data, and pre-reset measurements. Reuse readings under 15 minutes old before a usage request and up to one hour old only after HTTP 429, preserving their measurement time.
+- Retain the five-second keychain timeout, plaintext/hex decoding, native fallback, custom/file credential isolation, and unchanged Codex/Windows behavior. Keep cache access read-only; profile verification is memory-only and repeated when the token changes.
 
 ## 1.2.0 — 2026-10-16
 

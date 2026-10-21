@@ -226,7 +226,7 @@ it creates one **draft** release: four packages, `SHA256SUMS`, `updates.json`, a
 
 ## Privacy and known limitations
 
-- Existing tokens are sent only to the corresponding provider's HTTPS usage endpoint. There is no separate backend, browser-cookie collection, or token logging/storage.
+- Existing tokens are sent only to the corresponding provider's HTTPS usage endpoint and, for macOS cswap cache matching, Claude's HTTPS OAuth profile endpoint. There is no separate backend, browser-cookie collection, token logging, or persistent token storage. See the [macOS cache behavior and limits](mac/README.md#claude-swap-usage-cache-macos).
 - Usage endpoints are observed interfaces, not guaranteed stable public APIs. Provider changes can break the integration.
 - Windows GUI, installer execution, and mixed-DPI behavior require Windows validation. Cross-compilation and logic checks do not establish visual correctness.
 - With Hidden Bar 1.11.1 on macOS 27, launch the app from `/Applications`. Apps launched from `build/`, Downloads, or `~/Applications` can be hidden even when placed to the right of Hidden Bar's arrow. The source launcher installs to the required location.

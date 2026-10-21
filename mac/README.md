@@ -77,6 +77,24 @@ from the configured terminal:
 The pet does not renew tokens or modify CLI credential files or keychain items.
 Use the original CLI to reauthenticate. API-key billing has no subscription quota percentage.
 
+### claude-swap usage cache (macOS)
+
+For the default Claude keychain login, the pet can read cswap's schema-2
+`~/.claude-swap-backup/cache/usage.json` to avoid competing usage requests.
+When a usable cache exists, it verifies the current token's account with Claude's
+`/api/oauth/profile` endpoint. That verification is reused in memory for the same
+token; a changed token is verified again. Missing or unresolvable identity falls
+back to the normal usage request, never a guessed account.
+
+Cache rows must match both email and organization UUID; duplicate matches are
+ignored. Measurements under 15 minutes old avoid the usage request. Only after
+HTTP 429 may the pet use a measurement up to one hour old. Future timestamps,
+expired quota-window resets, unsupported schemas, and invalid cache data are
+not reused. The panel retains the original measurement time, not the refresh time.
+
+Custom Claude directories, file-based credentials, Codex, and Windows do not use
+this cache integration. The pet never writes the cswap cache or refreshes tokens.
+
 ## Building from source
 
 Install Swift 6+ through Xcode or Command Line Tools, then run from the repository root.
