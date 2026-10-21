@@ -3,6 +3,10 @@
 macOS and Windows share the root [VERSION](VERSION) and one `vMAJOR.MINOR.PATCH`
 GitHub Release. Published platform-specific history below remains unchanged.
 
+## Unreleased
+
+- Refine Usagi across all 48 shared sprite frames: thin, tapered eyebrows that remain connected at menu-bar size, round highlighted eyes, a compact character-style mouth, short blush hatching, and pooled tears. Preserve the silhouette, six moods, and blink animation on macOS and Windows.
+
 ## 1.2.0 — 2026-10-16
 
 - Add manual stable-release checks and verified in-app installation on macOS (Apple Silicon/Intel) and Windows x64 (installed/portable).
