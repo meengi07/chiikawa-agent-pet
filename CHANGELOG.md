@@ -3,6 +3,10 @@
 macOS and Windows share the root [VERSION](VERSION) and one `vMAJOR.MINOR.PATCH`
 GitHub Release. Published platform-specific history below remains unchanged.
 
+## Unreleased
+
+- Restore Momonga's short, separate eyebrow strokes across all 12 open/blinking source poses (48 runtime frames) on macOS and Windows. Replace undersized dots and missing blink-pose brows so they remain readable after native sprite downscaling; preserve every other feature, silhouette, and alpha channel.
+
 ## 1.2.1 — 2026-10-21
 
 - Refine Usagi across all 48 shared sprite frames: thin, tapered eyebrows that remain connected at menu-bar size, round highlighted eyes, a compact character-style mouth, short blush hatching, and pooled tears. Preserve the silhouette, six moods, and blink animation on macOS and Windows.
