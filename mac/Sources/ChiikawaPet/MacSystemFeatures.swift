@@ -27,10 +27,13 @@ final class MacSystemFeatures: NSObject, UNUserNotificationCenterDelegate {
 
     func requestNotificationPermission() async -> String? {
         guard let notificationCenter else { return T("알림은 설치된 앱에서만 사용할 수 있습니다.") }
-        do {
-            let allowed = try await notificationCenter.requestAuthorization(options: [.alert, .sound])
-            return allowed ? nil : T("알림 권한이 없습니다. 시스템 설정에서 알림을 허용하세요.")
-        } catch { return T("알림 권한을 요청하지 못했습니다. 시스템 설정을 확인하세요.") }
+        let outcome = await withCheckedContinuation { continuation in
+            notificationCenter.requestAuthorization(options: [.alert, .sound]) { allowed, error in
+                continuation.resume(returning: (allowed: allowed, failed: error != nil))
+            }
+        }
+        if outcome.failed { return T("알림 권한을 요청하지 못했습니다. 시스템 설정을 확인하세요.") }
+        return outcome.allowed ? nil : T("알림 권한이 없습니다. 시스템 설정에서 알림을 허용하세요.")
     }
 
     func notify(events: [UsageAlertEvent]) async {
@@ -52,8 +55,12 @@ final class MacSystemFeatures: NSObject, UNUserNotificationCenterDelegate {
         content.threadIdentifier = "usage-alerts"
         content.sound = .default
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-        do { try await notificationCenter.add(request) }
-        catch { failure?(T("사용량 알림을 표시하지 못했습니다.")) }
+        let failed = await withCheckedContinuation { continuation in
+            notificationCenter.add(request) { error in
+                continuation.resume(returning: error != nil)
+            }
+        }
+        if failed { failure?(T("사용량 알림을 표시하지 못했습니다.")) }
     }
 
     func clearNotifications() {
