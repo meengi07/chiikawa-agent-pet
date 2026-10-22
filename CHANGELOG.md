@@ -3,9 +3,16 @@
 macOS and Windows share the root [VERSION](VERSION) and one `vMAJOR.MINOR.PATCH`
 GitHub Release. Published platform-specific history below remains unchanged.
 
-## Unreleased
+## 1.3.0 — 2026-10-22
 
 - Restore Momonga's short, separate eyebrow strokes across all 12 open/blinking source poses (48 runtime frames) on macOS and Windows. Replace undersized dots and missing blink-pose brows so they remain readable after native sprite downscaling; preserve every other feature, silhouette, and alpha channel.
+- Add account-bound quota snapshots and source/measurement-age/refresh status on both platforms. Honor account-specific HTTP 429 cooldowns and `Retry-After`, including manual refresh; prevent old-account and expired-reset values from driving current indicators.
+- Parse Claude model limits and Codex additional rate-limit windows. Show account, plan, authentication source, extra credits, spend, and reset-credit counts without converting them into subscription percentages.
+- Add configurable expression targets and boundaries, identify the limiting window, and keep character-selection previews cheerful. Offer ordered per-window menu-bar/tray pins, compact/bar rendering, reset countdowns, and opt-in pace estimates.
+- Add opt-in deduplicated quota/pace notifications, native login startup and a recorded global panel shortcut. Shortcuts toggle the panel while notification clicks only open it; previews never restore native registrations. Preserve existing pet, language and update preferences.
+- Add explicit multiple CLI homes, opt-in supported saved-account discovery, Codex Windows Credential Manager reads, explicit Windows-accessible WSL paths, and sanitized diagnostics. Never refresh tokens, switch accounts or write other tools' credentials.
+- Add opt-in streamed Claude/Codex local token history with replay deduplication, safety/incompleteness warnings and local-day periods. Keep totals home-scoped and separate from quota/credits; custom exact-model USD rates are required for cost estimates, with unknown models/tiers left unpriced.
+- Remove only the installed copy's own Windows login-startup entry during uninstall; preserve another portable copy's entry and existing preferences/CLI credentials.
 
 ## 1.2.1 — 2026-10-21
 

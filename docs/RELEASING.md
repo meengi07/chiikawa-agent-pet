@@ -6,12 +6,12 @@ macOS and Windows share one version, one tag, and one GitHub Release.
 
 | Setting | Value |
 |---|---|
-| Canonical version | Root [VERSION](../VERSION), currently `1.2.0` |
-| Tag | `vMAJOR.MINOR.PATCH`, currently `v1.2.0` |
+| Canonical version | Root [VERSION](../VERSION), currently `1.3.0` |
+| Tag | `vMAJOR.MINOR.PATCH`, currently `v1.3.0` |
 | Workflow | [release.yml](../.github/workflows/release.yml) |
-| Release notes | [releases/v1.2.0.md](releases/v1.2.0.md), English and Korean together |
-| macOS build output | `build/release/mac/1.2.0/` |
-| Windows build output | `build/release/windows/1.2.0/` |
+| Release notes | [releases/v1.3.0.md](releases/v1.3.0.md), English and Korean together |
+| macOS build output | `build/release/mac/1.3.0/` |
+| Windows build output | `build/release/windows/1.3.0/` |
 | Combined CI artifacts | `release/`: four packages, `SHA256SUMS`, `updates.json`, `updates.sig` |
 
 ## Versioning
@@ -40,7 +40,7 @@ python3 scripts/check-release.py mac
 
 ```powershell
 .\scripts\package-windows.ps1
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.0\ChiikawaPet-1.2.0-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.3.0\ChiikawaPet-1.3.0-win-x64-setup.exe
 python scripts/check-release.py windows
 ```
 
@@ -49,10 +49,10 @@ these four files into `release/` and run the combined check from the repository 
 
 | Platform | File |
 |---|---|
-| macOS, Apple Silicon | `ChiikawaPet-1.2.0-mac-arm64.dmg` |
-| macOS, Intel | `ChiikawaPet-1.2.0-mac-x86_64.dmg` |
-| Windows, x64 installer | `ChiikawaPet-1.2.0-win-x64-setup.exe` |
-| Windows, x64 portable | `ChiikawaPet-1.2.0-win-x64.zip` |
+| macOS, Apple Silicon | `ChiikawaPet-1.3.0-mac-arm64.dmg` |
+| macOS, Intel | `ChiikawaPet-1.3.0-mac-x86_64.dmg` |
+| Windows, x64 installer | `ChiikawaPet-1.3.0-win-x64-setup.exe` |
+| Windows, x64 portable | `ChiikawaPet-1.3.0-win-x64.zip` |
 
 ```sh
 python3 scripts/check-release.py all release
@@ -60,7 +60,7 @@ python3 scripts/check-release.py all release
 
 This validates all four packages and writes `release/SHA256SUMS`. Upload that
 single combined checksum file, not the per-platform check outputs, to the
-[v1.2.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.0)
+[v1.3.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.3.0)
 alongside all four packages and the signed update metadata below. Packages include both documentation languages,
 the MIT source-code license, and a separate artwork notice. Windows packages
 also include .NET's runtime licenses.
@@ -104,7 +104,7 @@ Mac uses a throwaway copy marked `0.0.0`; Windows uses the public 1.1.6 installe
 and portable packages. Checks cover real replacement/restart, launch-failure
 rollback, invalid-input rejection, preferences, registry version, and portable
 user files. Windows smoke needs an isolated interactive account, not your live installation.
-Versions 1.1.6 and earlier need one manual install of 1.2.0 to gain the updater.
+Versions 1.1.6 and earlier need one manual install of 1.3.0 to gain the updater.
 
 ## GitHub workflow
 
@@ -117,9 +117,9 @@ Inspect the artifacts, checksums, and combined release notes before deliberately
 publishing the draft. Draft creation does not publish the release.
 
 ```sh
-git tag -a v1.2.0 -m 'Chiikawa Agent Pet v1.2.0'
+git tag -a v1.3.0 -m 'Chiikawa Agent Pet v1.3.0'
 git push origin main
-git push origin v1.2.0
+git push origin v1.3.0
 ```
 
 Private repository releases remain private. The mac app is ad-hoc signed, not

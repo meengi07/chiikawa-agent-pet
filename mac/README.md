@@ -7,9 +7,9 @@ AppKit, and SwiftUI and runs from the menu bar without a Dock icon.
 
 ## Installation
 
-Download `ChiikawaPet-1.2.1-mac-arm64.dmg` for Apple Silicon or
-`ChiikawaPet-1.2.1-mac-x86_64.dmg` for Intel from the shared
-[v1.2.1 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.1).
+Download `ChiikawaPet-1.3.0-mac-arm64.dmg` for Apple Silicon or
+`ChiikawaPet-1.3.0-mac-x86_64.dmg` for Intel from the shared
+[v1.3.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.3.0).
 Its single `SHA256SUMS` covers both DMGs and both Windows packages.
 Open the DMG and drag `ChiikawaPet.app` from the left onto the Applications
 shortcut on the right, following the arrow. Launch `/Applications/ChiikawaPet.app`.
@@ -37,9 +37,9 @@ The choice is applied immediately and saved for the next launch.
   toggle wandering or visibility, refresh usage, or quit.
 - Menu-bar controls remain available when the desktop pet is hidden.
 
-The menu bar shows the character, provider logos, and current quota values.
-Claude shows its first two available limits; Codex shows its lowest reported
-limit. Failed or disconnected providers show `—`.
+The menu bar shows the pet and provider logos. In the panel, choose individual
+account/window metrics, reorder them, and select compact or bar rendering. With no
+custom pins, the default selection is used. Unknown or stale metrics show `—`.
 
 ## App updates
 
@@ -54,7 +54,7 @@ Disable it before installation to cancel automatic application. Previews never c
 or download updates. Packages use a pinned release key and SHA-256; this does not
 provide Apple Developer ID signing or notarization.
 
-Versions 1.1.6 and earlier have no updater: install 1.2.1 manually once.
+Versions 1.1.6 and earlier have no updater: install 1.3.0 manually once.
 
 ## Accounts
 
@@ -77,6 +77,32 @@ from the configured terminal:
 The pet does not renew tokens or modify CLI credential files or keychain items.
 Use the original CLI to reauthenticate. API-key billing has no subscription quota percentage.
 
+Use the panel's monitoring preferences to add an explicit Claude or Codex home.
+This also works when Finder does not inherit `CLAUDE_CONFIG_DIR` or `CODEX_HOME`.
+Optional saved-account discovery is off by default and reads supported cswap/xswap
+stores without activating accounts or modifying them. Account labels, plan,
+authentication source, measurement origin/age, and retry timing are shown separately.
+
+Last-good snapshots are saved locally without credentials and restored as stale.
+Current identity and reset boundaries must still be verified before a value can
+drive the pet or menu bar. HTTP 429 cooldowns also apply to manual refresh.
+
+## Monitoring and system preferences
+
+Choose the account/window that drives the pet, adjust expression boundaries, pin
+menu-bar metrics, or enable reset countdowns and conservative usage-pace estimates.
+The panel names the limiting window; character-picker previews stay cheerful.
+Quota and pace notifications are opt-in and deduplicated. Login startup uses macOS
+Login Items; the panel reports registration/permission failures. Record a global
+panel shortcut or remove it to release the shortcut.
+
+Local history and saved-account discovery are **off by default**. History reads
+only the chosen CLI home's logs; it is not verified per-account billing.
+There are no bundled token prices. See the root guide for [history attribution,
+unpriced tokens, and the custom pricing format](../README.md#local-history-credits-and-estimated-cost).
+Copy sanitized diagnostics from the panel for a bug report; do not attach CLI
+authentication files. These options preserve the existing pet, language, and update settings.
+
 ### claude-swap usage cache (macOS)
 
 For the default Claude keychain login, the pet can read cswap's schema-2
@@ -94,6 +120,7 @@ not reused. The panel retains the original measurement time, not the refresh tim
 
 Custom Claude directories, file-based credentials, Codex, and Windows do not use
 this cache integration. The pet never writes the cswap cache or refreshes tokens.
+Legacy slot-only cswap cache rows without verifiable account identity are not reused.
 
 ## Building from source
 
@@ -112,7 +139,7 @@ not the system Python. Finder does not need to run during packaging.
 do not install it.
 
 The root [VERSION](../VERSION) sets the version for both macOS and Windows.
-Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.2.1/`.
+Use `x86_64` to build an Intel DMG. Packages go to `build/release/mac/1.3.0/`.
 Quit the running app before trying a preview, which performs no account requests:
 
 ```sh

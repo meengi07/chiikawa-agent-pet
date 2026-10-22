@@ -8,15 +8,15 @@ Chiikawa, Hachiware, Usagi, and Momonga sprites.
 ## Installation
 
 Download Windows packages from the shared
-[v1.2.1 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.2.1).
+[v1.3.0 release](https://github.com/meengi07/chiikawa-agent-pet/releases/tag/v1.3.0).
 Its single `SHA256SUMS` covers the two Windows packages and both macOS DMGs.
-Run `ChiikawaPet-1.2.1-win-x64-setup.exe` to install for the current user and add
+Run `ChiikawaPet-1.3.0-win-x64-setup.exe` to install for the current user and add
 Start-menu shortcuts and an uninstall entry. No administrator access is required.
 The wizard has a cream/pastel theme, all four characters, and a matching app icon.
 On Finish, leave **Launch Chiikawa Pet** checked to start immediately, or clear it
 and launch later from the Start menu. Korean Windows uses Korean installer text;
 other Windows UI languages use English. Uninstall preserves preferences and CLI sign-in files.
-Alternatively, extract **all** files from `ChiikawaPet-1.2.1-win-x64.zip` and run
+Alternatively, extract **all** files from `ChiikawaPet-1.3.0-win-x64.zip` and run
 `ChiikawaPet.exe`. Both packages include .NET; do not move the portable EXE away
 from its DLLs and other files. Packages currently have no code-signing certificate.
 
@@ -64,7 +64,7 @@ off before installation to cancel automatic application. Previews never check or
 download updates. In-app updates support x64 Windows only.
 Keep `ChiikawaPet.Updater.exe` and `.chiikawa-managed-files.json` with the app.
 
-Install 1.2.1 manually once when upgrading from 1.1.6 or earlier.
+Install 1.3.0 manually once when upgrading from 1.1.6 or earlier.
 Pinned-key release signatures and SHA-256 authenticate updates; they are not a
 Windows code-signing certificate and do not remove SmartScreen warnings.
 
@@ -73,15 +73,38 @@ Windows code-signing certificate and do not remove SmartScreen warnings.
 - Claude: use `/login` in Windows-installed Claude Code. The pet reads `%USERPROFILE%\.claude\.credentials.json`.
 - Codex: use `codex login` in a Windows terminal. The pet reads the ChatGPT OAuth login in `%USERPROFILE%\.codex\auth.json`. API-key billing has no subscription quota percentage.
 - `CLAUDE_CONFIG_DIR` and `CODEX_HOME` override these directories when the executable is launched from the shell that sets them.
-- WSL credentials are not discovered automatically. To use them, set an override to a Windows-accessible directory containing the credential file.
-- Windows Credential Manager-only storage is not supported.
+- Add explicit Claude/Codex homes in the panel, including a Windows-accessible `\\wsl.localhost\<distribution>\...` directory. The app does not invoke `wsl.exe`, copy credentials, or discover WSL homes automatically; Windows may activate the chosen distribution when accessing its UNC path.
+- Opt into Codex's classic keyring-rs Credential Manager storage in the panel. It reads only the configured home's `cli|<first 16 SHA256 characters>.Codex Auth` target and UTF-16LE blob; newer secret-store namespaces are not supported. Stored credentials are never modified.
 - The pet does not renew tokens or write credential files. Reauthenticate in the CLI, then refresh the panel.
 
 Tokens are sent only to the corresponding provider's HTTPS quota endpoint.
 Redirects and cookies are disabled and tokens are not logged or saved.
-Both providers are queried concurrently and refreshed every two minutes.
-Failed readings remain labeled stale in the panel and are excluded from current
-tray values and the expression calculation.
+Accounts refresh concurrently on the normal two-minute schedule; HTTP 429 applies
+per-account cooldowns and respects `Retry-After`, including for manual refresh.
+Last-good snapshots persist without tokens, return as stale, and cannot cross
+verified account/reset boundaries. Stale data does not drive the pet or current tray values.
+
+## Monitoring and system preferences
+
+Use the panel's monitoring/settings controls to select the pet's account/window and
+expression thresholds, choose and reorder tray metrics, switch compact/bar rendering,
+and show reset countdowns or conservative pace estimates. The limiting window is
+identified; character-picker previews remain cheerful.
+
+Quota/pace notifications and saved-account discovery are **off by default**.
+Notifications establish a first-reading/reset baseline and deduplicate crossings.
+Discovery reads supported saved accounts without switching or refreshing them.
+The panel also exposes launch-at-login and a recorded global panel shortcut;
+registration failures are shown. Uninstall removes only the installed copy's own
+startup entry. Before moving or deleting a portable copy, disable its startup option;
+enable it again after moving to register the new path.
+
+Opt-in local history reads only the chosen CLI home's logs. Totals are home-scoped,
+not verified per-account bills. Provider-reported credits, token counts, custom-price
+estimates, and subscription percentages stay separate. There are no bundled prices.
+See [history limitations and the pricing JSON format](../README.md#local-history-credits-and-estimated-cost).
+Copy sanitized diagnostics from the panel when reporting an issue; never attach
+authentication files. Existing pet, language, and update preferences are preserved.
 
 ## Building
 
@@ -94,7 +117,7 @@ for the native-AOT updater, then run from the repository root:
 
 The root [VERSION](../VERSION) sets the version for both Windows and macOS.
 The script runs logic checks and writes the app to `build\windows\win-x64` and
-the ZIP to `build\release\windows\1.2.1`. ARM64 source builds require the matching
+the ZIP to `build\release\windows\1.3.0`. ARM64 source builds require the matching
 MSVC toolchain and `-Runtime win-arm64`; in-app updates are x64-only.
 On Windows, the script generates installer BMPs and a multi-size ICO from the
 existing sprites using built-in System.Drawing, then embeds that icon in the app.
@@ -111,6 +134,9 @@ Cross-compilation from macOS or Linux:
 dotnet run --project windows/Checks/Checks.csproj -c Release
 dotnet publish windows/ChiikawaPet.csproj -c Release -r win-x64 --self-contained true -o build/windows/win-x64
 ```
+
+On macOS, run checks with `TMPDIR=/private/tmp/ dotnet run --project windows/Checks/Checks.csproj -c Release`.
+The updater deliberately rejects symlinked app paths; the usual `/var` temp prefix is a macOS symlink.
 
 Raw cross-compilation does not generate the native-AOT updater, Windows installer
 artwork, or branded executable icon. Use the Windows scripts for complete release packages.
@@ -140,7 +166,7 @@ Both restore settings and avoid real credentials or quota requests.
 On a clean Windows desktop, run the full installer check:
 
 ```powershell
-.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.2.1\ChiikawaPet-1.2.1-win-x64-setup.exe
+.\scripts\test-installed-windows.ps1 -Installer .\build\release\windows\1.3.0\ChiikawaPet-1.3.0-win-x64-setup.exe
 ```
 
 This drives the real install/uninstall wizards, checks finish-page launch, ordinary
