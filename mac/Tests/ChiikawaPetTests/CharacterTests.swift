@@ -105,8 +105,11 @@ private struct CharacterFixtureUsage: UsageFetching {
     let claudeUsage: Data
     let codexUsage: Data
 
-    func fetch(_ provider: UsageProvider, allowKeychainPrompt: Bool) async throws -> UsageReading {
-        let now = Date(timeIntervalSince1970: 1_780_000_000)
+    func cached(_ account: UsageAccount) async -> UsageReading? { nil }
+
+    func fetch(_ account: UsageAccount, allowKeychainPrompt: Bool) async throws -> UsageReading {
+        let provider = account.provider
+        let now = Date()
         switch provider {
         case .claude: return try UsageClient.decodeClaude(claudeUsage, now: now)
         case .codex: return try UsageClient.decodeCodex(codexUsage, now: now)

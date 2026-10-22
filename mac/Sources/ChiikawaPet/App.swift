@@ -15,14 +15,15 @@ struct ChiikawaPetApp {
         }
         if arguments.contains("--usage") {
             let usageClient = UsageClient()
-            for provider in UsageProvider.allCases {
+            for account in UsageAccount.defaults {
+                let provider = account.provider
                 do {
-                    let reading = try await usageClient.fetch(provider, allowKeychainPrompt: false)
+                    let reading = try await usageClient.fetch(account, allowKeychainPrompt: false)
                     for window in reading.windows {
                         print("\(provider.rawValue) · \(T(window.title)): \(window.remainingPercent)% remaining")
                     }
                 } catch {
-                    print("\(provider.rawValue): \(T(error.localizedDescription))")
+                    print("\(provider.rawValue): \(T(UsageStore.safeError(error)))")
                 }
             }
             return
@@ -38,6 +39,22 @@ struct ChiikawaPetApp {
             previewPercent = percent
         }
         let application = NSApplication.shared
+        if previewPercent == nil {
+            do {
+                guard try AppInstanceGuard.acquire() else {
+                    if let identifier = AppInstanceGuard.ownerProcessIdentifier {
+                        NSRunningApplication(processIdentifier: identifier)?.activate(options: [.activateAllWindows])
+                    }
+                    return
+                }
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = T("앱 중복 실행 보호를 준비하지 못했습니다.")
+                alert.informativeText = T("앱 지원 폴더의 권한을 확인한 뒤 다시 실행하세요.")
+                alert.runModal()
+                return
+            }
+        }
         let delegate = PetAppDelegate(previewPercent: previewPercent, showUsageOnLaunch: arguments.contains("--show-usage"))
         application.delegate = delegate
         application.setActivationPolicy(.accessory)
@@ -125,7 +142,12 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         NotificationCenter.default.addObserver(self, selector: #selector(screenChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
         NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(screenChanged), name: NSWorkspace.didWakeNotification, object: nil)
-        Task { await store.refresh() }
+        store.configureSystemFeatures(openPanel: { [weak self] in
+            guard let self else { return }
+            if self.usageWindow?.isVisible != true { self.toggleUsage() }
+        }, togglePanel: { [weak self] in self?.toggleUsage() })
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(reduceMotionChanged), name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil)
+        Task { await store.refresh(); await store.loadHistory() }
         if showUsageOnLaunch { toggleUsage() }
         let rolledBack = updater.showRollbackFailure(CommandLine.arguments)
         updater.configureAutomatic(store.automaticUpdates, checkImmediately: !rolledBack)
@@ -135,6 +157,7 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         animationTimer?.invalidate()
         refreshTimer?.invalidate()
+        store.systemFeatures.stop()
         if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
         savePosition()
     }
@@ -157,6 +180,7 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         petView.language = store.language
         petView.remainingPercent = store.remainingPercent
+        petView.moodOverride = store.mood
         petView.character = store.selectedCharacter
         petWindow.title = T("\(store.selectedCharacter.name) 펫")
         usageWindow?.title = T("\(store.selectedCharacter.name) 사용량")
@@ -173,6 +197,7 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let presentation = store.menuBarPresentation
         guard force || presentation != appliedMenuPresentation, let button = statusItem.button else { return }
         appliedMenuPresentation = presentation
+        statusItem.length = MenuBarArtwork.width(for: presentation) + 12
         button.image = MenuBarArtwork.image(for: presentation, appearance: button.effectiveAppearance)
     }
 
@@ -218,7 +243,7 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func updatePetVisibility() {
         guard appliedPetVisibility != store.isPetVisible else { return }
         appliedPetVisibility = store.isPetVisible
-        petView.animationEnabled = store.isPetVisible
+        petView.animationEnabled = store.isPetVisible && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         animationTimer?.invalidate()
         animationTimer = nil
         if store.isPetVisible {
@@ -252,7 +277,7 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         let height = min(contentView.fittingSize.height, max(1, screen.height - 24))
         let hostingView = NSHostingView(rootView: usagePanel.frame(height: height))
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: UsagePanel.width, height: height), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        let panel = UsageWindow(contentRect: NSRect(x: 0, y: 0, width: UsagePanel.width, height: height), styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.title = T("\(store.selectedCharacter.name) 사용량")
         panel.setAccessibilityRole(.window)
         panel.setAccessibilitySubrole(.floatingWindow)
@@ -276,13 +301,14 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let y = min(max(preferredY, screen.minY + 12), screen.maxY - height - 12)
         panel.setFrameOrigin(NSPoint(x: x, y: y))
         usageWindow = panel
-        panel.orderFrontRegardless()
+        panel.makeKeyAndOrderFront(nil)
         clickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             Task { @MainActor in self?.dismissUsageIfOutside() }
         }
     }
 
     private func dismissUsageIfOutside() {
+        if NSApp.modalWindow != nil { return }
         let mouse = NSEvent.mouseLocation
         if usageWindow?.frame.contains(mouse) == true { return }
         if store.isPetVisible && petWindow.frame.contains(mouse) { return }
@@ -397,9 +423,12 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         savePosition()
     }
     @objc private func screenChanged() { constrainPetToScreens(); closeUsage() }
+    @objc private func reduceMotionChanged() {
+        petView.animationEnabled = store.isPetVisible && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
 
     private func walk() {
-        guard store.isPetVisible, store.wanders, !isDragging, usageWindow == nil,
+        guard store.isPetVisible, store.wanders, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion, !isDragging, usageWindow == nil,
               !NSEvent.mouseLocation.isNear(petWindow.frame, padding: 24) else { return }
         let screen = petWindow.screen?.visibleFrame ?? NSScreen.main!.visibleFrame
         var origin = petWindow.frame.origin
@@ -425,6 +454,10 @@ final class PetAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         UserDefaults.standard.set(petWindow.frame.minX, forKey: "petX")
         UserDefaults.standard.set(petWindow.frame.minY, forKey: "petY")
     }
+}
+
+final class UsageWindow: NSPanel {
+    override var canBecomeKey: Bool { true }
 }
 
 @MainActor

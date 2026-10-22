@@ -135,10 +135,13 @@ struct UsageTests {
 private actor RefreshSequenceUsage: UsageFetching {
     private var failures: [UsageProvider] = []
     func fail(_ providers: [UsageProvider]) { failures = providers }
-    func fetch(_ provider: UsageProvider, allowKeychainPrompt: Bool) async throws -> UsageReading {
+    func cached(_ account: UsageAccount) async -> UsageReading? { nil }
+
+    func fetch(_ account: UsageAccount, allowKeychainPrompt: Bool) async throws -> UsageReading {
+        let provider = account.provider
         if failures.contains(provider) { throw UsageFailure.unauthorized(provider) }
         let usedPercent: Double = provider == .claude ? 91 : 20
         let window = try QuotaWindow(title: "주간", usedPercent: usedPercent, resetsAt: nil)
-        return UsageReading(provider: provider, windows: [window], fetchedAt: Date(timeIntervalSince1970: 1_780_000_000))
+        return UsageReading(provider: provider, windows: [window], fetchedAt: Date())
     }
 }

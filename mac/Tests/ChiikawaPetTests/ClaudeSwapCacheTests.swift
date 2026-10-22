@@ -63,11 +63,16 @@ struct ClaudeSwapCacheTests {
         let measured = Date().timeIntervalSince1970 - 120
         let original = cache([row(fetchedAt: measured)])
         try fixture.writeCache(original)
-        let first = try await fixture.client.fetchClaude(token: "token-a", useSwapCache: true)
-        let second = try await fixture.client.fetchClaude(token: "token-a", useSwapCache: true)
+        let first = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
+        let second = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
         #expect(first.remainingPercent == 90)
         #expect(second.remainingPercent == 90)
         #expect(second.fetchedAt == Date(timeIntervalSince1970: measured))
+        #expect(first.source == .swapCache)
+        #expect(second.accountID == UsageAccount.claude.id)
+        #expect(second.accountLabel == "active@example.invalid")
+        #expect(second.authSource == "Claude Code keychain")
+        #expect(second.credentialFingerprint == UsageClient.fingerprint(Data("token-a".utf8)))
         #expect(SwapHTTP.state.paths == ["/api/oauth/profile"])
         #expect(try Data(contentsOf: fixture.cachePath) == original)
     }
@@ -77,11 +82,16 @@ struct ClaudeSwapCacheTests {
         defer { fixture.cleanup() }
         try fixture.writeCache(cache([row(fetchedAt: Date().timeIntervalSince1970 - 1_200)]))
         SwapHTTP.state.configure(usage: Reply(status: 429, body: "{}"))
-        let result = try await fixture.client.fetchClaude(token: "token-a", useSwapCache: true)
+        let result = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
         #expect(result.remainingPercent == 90)
+        #expect(result.source == .swapCache)
+        #expect(result.retryAt.map { $0 > Date() } == true)
         #expect(SwapHTTP.state.paths == ["/api/oauth/profile", "/api/oauth/usage"])
         SwapHTTP.state.configure(usage: Reply(status: 500, body: "{}"))
-        await expectHTTP(500) { try await fixture.client.fetchClaude(token: "token-a", useSwapCache: true) }
+        await expectHTTP(429) { try await fixture.client.fetch(.claude, allowKeychainPrompt: false) }
+        #expect(SwapHTTP.state.paths.isEmpty)
+        let independent = fixture.makeClient()
+        await expectHTTP(500) { try await independent.fetch(.claude, allowKeychainPrompt: false) }
     }
 
     @Test func switchedTokenIsVerifiedAgainAndCannotInheritPreviousAccount() async throws {
@@ -92,13 +102,56 @@ struct ClaudeSwapCacheTests {
             row(fetchedAt: measured),
             row(email: "other@example.invalid", fetchedAt: measured + 60, usage: #"{"five_hour":{"pct":95}}"#)
         ]))
-        SwapHTTP.state.configure(profiles: ["Bearer token-b": Reply(status: 200, body: profile(email: "other@example.invalid"))])
-        let first = try await fixture.client.fetchClaude(token: "token-a", useSwapCache: true)
-        let switched = try await fixture.client.fetchClaude(token: "token-b", useSwapCache: true)
+        SwapHTTP.state.configure(profiles: ["Bearer token-b": Reply(status: 200, body: profile(email: "other@example.invalid", uuid: "other-user"))])
+        let first = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
+        try fixture.credentials.setToken("token-b")
+        let switched = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
         #expect(first.remainingPercent == 90)
         #expect(switched.remainingPercent == 5)
+        #expect(first.accountIdentity != switched.accountIdentity)
+        #expect(first.credentialFingerprint != switched.credentialFingerprint)
+        #expect(switched.accountLabel == "other@example.invalid")
         SwapHTTP.state.configure(profiles: ["Bearer token-c": Reply(status: 403, body: "{}")], usage: Reply(status: 429, body: "{}"))
-        await expectHTTP(429) { try await fixture.client.fetchClaude(token: "token-c", useSwapCache: true) }
+        try fixture.credentials.setToken("token-c")
+        do {
+            _ = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
+            Issue.record("Expected changed-account failure, not another account's quota")
+        } catch UsageFailure.accountChanged(let until) {
+            #expect(until.map { $0 > Date() } == true)
+        }
+        #expect(SwapHTTP.state.paths == ["/api/oauth/profile", "/api/oauth/usage"])
+    }
+
+    @Test func sameAccountRotationRevalidatesCacheThroughAuthoritativeCredentialSource() async throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanup() }
+        let measured = Date().timeIntervalSince1970 - 120
+        let original = cache([row(fetchedAt: measured)])
+        try fixture.writeCache(original)
+        let first = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
+        try fixture.credentials.setToken("rotated-token")
+        SwapHTTP.state.configure(profiles: ["Bearer rotated-token": Reply(status: 200, body: profile())])
+        let rotated = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
+        #expect(rotated.source == .swapCache)
+        #expect(rotated.remainingPercent == first.remainingPercent)
+        #expect(rotated.fetchedAt == first.fetchedAt)
+        #expect(rotated.accountIdentity == first.accountIdentity)
+        #expect(rotated.credentialFingerprint != first.credentialFingerprint)
+        #expect(SwapHTTP.state.paths == ["/api/oauth/profile"])
+        #expect(try Data(contentsOf: fixture.cachePath) == original)
+    }
+
+    @Test(arguments: [401, 403])
+    func rejectedLiveUsageCannotFallBackToAnOldSwapSnapshot(status: Int) async throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanup() }
+        try fixture.writeCache(cache([row(fetchedAt: Date().timeIntervalSince1970 - 1_200)]))
+        SwapHTTP.state.configure(usage: Reply(status: status, body: "{}"))
+        do {
+            _ = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
+            Issue.record("Expected rejected live credentials, not cached quota")
+        } catch UsageFailure.unauthorized(.claude) {}
+        #expect(SwapHTTP.state.paths == ["/api/oauth/profile", "/api/oauth/usage"])
     }
 
     @Test(arguments: ["{}", #"{"account":{"email":"active@example.invalid"},"organization":{"uuid":"shared-org"}}"#, #"{"account":{"uuid":"user-a","email":"active@example.invalid"}}"#])
@@ -107,9 +160,14 @@ struct ClaudeSwapCacheTests {
         defer { fixture.cleanup() }
         try fixture.writeCache(cache([row(fetchedAt: Date().timeIntervalSince1970 - 120)]))
         SwapHTTP.state.configure(profiles: ["Bearer token-a": Reply(status: 200, body: profileBody)], usage: Reply(status: 200, body: #"{"five_hour":{"utilization":25}}"#))
-        let result = try await fixture.client.fetchClaude(token: "token-a", useSwapCache: true)
+        let result = try await fixture.client.fetch(.claude, allowKeychainPrompt: false)
         #expect(result.remainingPercent == 75)
-        #expect(SwapHTTP.state.paths == ["/api/oauth/profile", "/api/oauth/usage"])
+        #expect(result.source == .live)
+        #expect(result.accountIdentity == nil)
+        #expect(result.accountLabel == nil)
+        #expect(result.authSource == "Claude Code keychain")
+        #expect(SwapHTTP.state.paths == ["/api/oauth/profile", "/api/oauth/usage", "/api/oauth/usage"])
+        #expect(SwapHTTP.state.queries.last == "cedar_ember=1&skip_spend=1")
     }
 
     @Test(arguments: ["missing", "schema", "malformed", "unknown", "expired", "reset", "duplicate"])
@@ -129,7 +187,7 @@ struct ClaudeSwapCacheTests {
         }
         if kind != "missing" { try fixture.writeCache(data) }
         SwapHTTP.state.configure(usage: Reply(status: 429, body: "{}"))
-        await expectHTTP(429) { try await fixture.client.fetchClaude(token: "token-a", useSwapCache: true) }
+        await expectHTTP(429) { try await fixture.client.fetch(.claude, allowKeychainPrompt: false) }
     }
 
     @Test(arguments: [false, true])
@@ -142,18 +200,20 @@ struct ClaudeSwapCacheTests {
         let credential = Data(#"{"organizationUuid":"shared-org","claudeAiOauth":{"accessToken":"file-token"}}"#.utf8)
         try credential.write(to: directory.appendingPathComponent(".credentials.json"))
         let environment = customDirectory ? ["CLAUDE_CONFIG_DIR": directory.path] : [:]
-        let client = UsageClient(session: fixture.session, homeDirectory: fixture.home, environment: environment)
+        let client = UsageClient(session: fixture.session, homeDirectory: fixture.home, environment: environment,
+                                 keychainReader: { _, _, _ in nil }, securityReader: { _ in nil })
         SwapHTTP.state.configure(usage: Reply(status: 429, body: "{}"))
-        await expectHTTP(429) { try await client.fetch(.claude, allowKeychainPrompt: false) }
-        #expect(SwapHTTP.state.paths == ["/api/oauth/usage"])
+        await expectHTTP(429) { try await client.fetch(UsageAccount.claude, allowKeychainPrompt: false) }
+        #expect(SwapHTTP.state.paths == ["/api/oauth/profile", "/api/oauth/usage"])
     }
 
     @Test func emptyCustomDirectoryDoesNotFallBackToDefaultKeychain() async throws {
         let fixture = try Fixture()
         defer { fixture.cleanup() }
-        let client = UsageClient(session: fixture.session, homeDirectory: fixture.home, environment: ["CLAUDE_CONFIG_DIR": fixture.home.appendingPathComponent("empty").path])
+        let client = UsageClient(session: fixture.session, homeDirectory: fixture.home, environment: ["CLAUDE_CONFIG_DIR": fixture.home.appendingPathComponent("empty").path],
+                                 keychainReader: { _, _, _ in nil }, securityReader: { _ in nil })
         do {
-            _ = try await client.fetch(.claude, allowKeychainPrompt: false)
+            _ = try await client.fetch(UsageAccount.claude, allowKeychainPrompt: false)
             Issue.record("Expected custom profile login requirement")
         } catch UsageFailure.loginRequired(.claude) {
             #expect(SwapHTTP.state.paths.isEmpty)
@@ -168,7 +228,7 @@ struct ClaudeSwapCacheTests {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try Data(#"{"tokens":{"access_token":"codex-token","account_id":"codex-account"}}"#.utf8).write(to: directory.appendingPathComponent("auth.json"))
         SwapHTTP.state.configure(usage: Reply(status: 200, body: #"{"rate_limit":{"primary_window":{"used_percent":35,"limit_window_seconds":18000}}}"#))
-        let result = try await fixture.client.fetch(.codex, allowKeychainPrompt: false)
+        let result = try await fixture.client.fetch(UsageAccount.codex, allowKeychainPrompt: false)
         #expect(result.provider == .codex)
         #expect(result.remainingPercent == 65)
         #expect(SwapHTTP.state.paths == ["/backend-api/wham/usage"])
@@ -194,14 +254,17 @@ struct ClaudeSwapCacheTests {
             Issue.record("Expected HTTP \(status), not a cached success")
         } catch UsageFailure.http(let actual) {
             #expect(actual == status)
+        } catch UsageFailure.cooldown(let until) {
+            #expect(status == 429)
+            #expect(until > Date())
         } catch {
             Issue.record("Expected HTTP \(status), got \(error)")
         }
     }
 }
 
-private func profile(email: String = "active@example.invalid") -> String {
-    "{\"account\":{\"uuid\":\"synthetic-user\",\"email\":\"\(email)\"},\"organization\":{\"uuid\":\"shared-org\"}}"
+private func profile(email: String = "active@example.invalid", uuid: String = "synthetic-user") -> String {
+    "{\"account\":{\"uuid\":\"\(uuid)\",\"email\":\"\(email)\"},\"organization\":{\"uuid\":\"shared-org\"}}"
 }
 
 private struct Reply: Sendable {
@@ -213,16 +276,28 @@ private struct Fixture {
     let home: URL
     let session: URLSession
     let client: UsageClient
+    let credentials: SwapCredential
     var cachePath: URL { home.appendingPathComponent(".claude-swap-backup/cache/usage.json") }
 
     init() throws {
         home = FileManager.default.temporaryDirectory.appendingPathComponent("pet-swap-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: home, withIntermediateDirectories: false)
+        credentials = SwapCredential()
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [SwapHTTP.self]
         session = URLSession(configuration: configuration)
-        client = UsageClient(session: session, homeDirectory: home, environment: [:])
+        let credentialSource = credentials
+        client = UsageClient(session: session, homeDirectory: home, environment: [:],
+                             keychainReader: { service, _, _ in service == "Claude Code-credentials" ? credentialSource.data : nil },
+                             securityReader: { _ in nil })
         SwapHTTP.state.configure()
+    }
+
+    func makeClient() -> UsageClient {
+        let credentialSource = credentials
+        return UsageClient(session: session, homeDirectory: home, environment: [:],
+                           keychainReader: { service, _, _ in service == "Claude Code-credentials" ? credentialSource.data : nil },
+                           securityReader: { _ in nil })
     }
 
     func writeCache(_ data: Data) throws {
@@ -233,6 +308,16 @@ private struct Fixture {
     func cleanup() {
         session.invalidateAndCancel()
         try? FileManager.default.removeItem(at: home)
+    }
+}
+
+private final class SwapCredential: @unchecked Sendable {
+    private let lock = NSLock()
+    private var credential = Data(#"{"claudeAiOauth":{"accessToken":"token-a"}}"#.utf8)
+    var data: Data { lock.withLock { credential } }
+    func setToken(_ token: String) throws {
+        let document = try JSONSerialization.data(withJSONObject: ["claudeAiOauth": ["accessToken": token]])
+        lock.withLock { credential = document }
     }
 }
 
@@ -254,13 +339,17 @@ private final class SwapHTTP: URLProtocol, @unchecked Sendable {
         private var requests: [URLRequest] = []
         private var profiles: [String: Reply] = [:]
         private var usage = Reply(status: 500, body: "{}")
+        private var resetGrants = Reply(status: 200, body: #"{"cedar_ember":null}"#)
         var paths: [String] { lock.withLock { requests.map { $0.url!.path } } }
+        var queries: [String] { lock.withLock { requests.map { $0.url?.query ?? "" } } }
 
-        func configure(profiles: [String: Reply] = [:], usage: Reply = Reply(status: 500, body: "{}")) {
+        func configure(profiles: [String: Reply] = [:], usage: Reply = Reply(status: 500, body: "{}"),
+                       resetGrants: Reply = Reply(status: 200, body: #"{"cedar_ember":null}"#)) {
             lock.withLock {
                 requests = []
                 self.profiles = profiles
                 self.usage = usage
+                self.resetGrants = resetGrants
             }
         }
 
@@ -271,6 +360,7 @@ private final class SwapHTTP: URLProtocol, @unchecked Sendable {
                     let authorization = request.value(forHTTPHeaderField: "Authorization") ?? ""
                     return profiles[authorization] ?? Reply(status: 200, body: profile())
                 }
+                if request.url?.query == "cedar_ember=1&skip_spend=1" { return resetGrants }
                 return usage
             }
         }

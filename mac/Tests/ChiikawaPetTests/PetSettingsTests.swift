@@ -199,9 +199,12 @@ private actor PetSettingsFixtureUsage: UsageFetching {
 
     func fail(_ providers: [UsageProvider]) { failures = providers }
 
-    func fetch(_ provider: UsageProvider, allowKeychainPrompt: Bool) async throws -> UsageReading {
+    func cached(_ account: UsageAccount) async -> UsageReading? { nil }
+
+    func fetch(_ account: UsageAccount, allowKeychainPrompt: Bool) async throws -> UsageReading {
+        let provider = account.provider
         if failures.contains(provider) { throw UsageFailure.http(503) }
-        let now = Date(timeIntervalSince1970: 1_780_000_000)
+        let now = Date()
         switch provider {
         case .claude: return try UsageClient.decodeClaude(claudeUsage, now: now)
         case .codex: return try UsageClient.decodeCodex(codexUsage, now: now)

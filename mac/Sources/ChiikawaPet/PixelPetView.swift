@@ -11,6 +11,13 @@ class PixelPetView: NSView {
             needsDisplay = true
         }
     }
+    var moodOverride: PetMood? {
+        didSet {
+            guard moodOverride != oldValue else { return }
+            updateAccessibility()
+            needsDisplay = true
+        }
+    }
 
     var character: PetCharacter = .chiikawa {
         didSet {
@@ -223,7 +230,7 @@ class PixelPetView: NSView {
     private func updateAccessibility() {
         toolTip = T("클릭: 사용량 · 드래그: 이동 · 우클릭: 펫 종류")
         setAccessibilityHelp(toolTip)
-        let mood = PetMood.forRemaining(remainingPercent)
+        let mood = moodOverride ?? PetMood.forRemaining(remainingPercent)
         if let remainingPercent {
             let percent = remainingPercent.formatted(.number.precision(.fractionLength(0...1)))
             setAccessibilityLabel(T("\(character.name), 잔여량 \(percent)퍼센트. \(mood.caption)"))
@@ -251,7 +258,7 @@ class PixelPetView: NSView {
         context.fill(CGRect(x: 22, y: 77, width: 20, height: 1))
         context.fill(CGRect(x: 18, y: 78, width: 28, height: 1))
 
-        let mood = PetMood.forRemaining(remainingPercent)
+        let mood = moodOverride ?? PetMood.forRemaining(remainingPercent)
         let row = Self.spriteRow(for: mood)
         let column: Int
         if mood == .crying {
