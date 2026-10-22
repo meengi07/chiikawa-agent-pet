@@ -35,9 +35,14 @@ final class MacSystemFeatures: NSObject, UNUserNotificationCenterDelegate {
 
     func notify(events: [UsageAlertEvent]) async {
         guard notificationsEnabled, let notificationCenter, !events.isEmpty else { return }
-        let permission = await notificationCenter.notificationSettings()
+        let authorized = await withCheckedContinuation { continuation in
+            notificationCenter.getNotificationSettings { settings in
+                let status = settings.authorizationStatus
+                continuation.resume(returning: status == .authorized || status == .provisional)
+            }
+        }
         guard notificationsEnabled else { return }
-        guard permission.authorizationStatus == .authorized || permission.authorizationStatus == .provisional else {
+        guard authorized else {
             failure?(T("알림 권한이 없습니다. 시스템 설정에서 알림을 허용하세요."))
             return
         }
