@@ -153,11 +153,11 @@ internal static class UpdateChecks
         string destination = Path.Combine(temporary, "released-directory");
         Directory.CreateDirectory(source);
         File.WriteAllText(Path.Combine(source, "retained.txt"), "original payload");
-        using var held = CreateFileW(source, 0x80, 3, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
+        using var held = CreateFileW(source, 0x80000000, 3, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
         if (held.IsInvalid) throw new IOException("Cannot create the directory-sharing fixture.");
         Task move = UpdateApply.MoveDirectoryWhenReleased(source, destination);
         check(!move.IsCompleted && Directory.Exists(source) && !Directory.Exists(destination),
-            "Installed directory replacement waits while Windows retains a directory handle");
+            $"Installed directory replacement waits while Windows retains a directory handle; status={move.Status}, error={move.Exception?.GetBaseException()}");
         held.Dispose();
         move.GetAwaiter().GetResult();
         check(!Directory.Exists(source) && File.ReadAllText(Path.Combine(destination, "retained.txt")) == "original payload",
