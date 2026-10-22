@@ -23,6 +23,36 @@ $Isolation = Join-Path ([IO.Path]::GetTempPath()) ('chiikawa-installer-' + [Guid
 $OriginalClaude = $env:CLAUDE_CONFIG_DIR
 $OriginalCodex = $env:CODEX_HOME
 if ((Test-Path $InstallDirectory) -or (Test-Path $RegistryKey)) { throw 'Run this installer check on a clean Windows machine or CI runner.' }
+$RunSubkey = 'Software\Microsoft\Windows\CurrentVersion\Run'
+$StartupName = 'ChiikawaAgentPet'
+$OriginalStartup = $null
+$OriginalStartupKind = $null
+$StartupTouched = $false
+$Run = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($RunSubkey)
+try {
+    if ($null -ne $Run -and $Run.GetValueNames() -contains $StartupName) {
+        $OriginalStartup = $Run.GetValue($StartupName, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+        $OriginalStartupKind = $Run.GetValueKind($StartupName)
+    }
+} finally {
+    if ($null -ne $Run) { $Run.Dispose() }
+}
+
+function Get-StartupValue {
+    $Key = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($RunSubkey)
+    try {
+        if ($null -ne $Key) { return $Key.GetValue($StartupName, $null, [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames) }
+        return $null
+    } finally {
+        if ($null -ne $Key) { $Key.Dispose() }
+    }
+}
+
+function Set-StartupValue([object]$Value, [Microsoft.Win32.RegistryValueKind]$Kind = [Microsoft.Win32.RegistryValueKind]::String) {
+    $Key = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey($RunSubkey)
+    try { $Key.SetValue($StartupName, $Value, $Kind) }
+    finally { $Key.Dispose() }
+}
 
 function Assert-Preserved {
     if ([IO.File]::ReadAllText($SentinelPath) -cne $Sentinel) { throw 'Installer removed or changed the preference sentinel.' }
@@ -90,9 +120,12 @@ try {
     Assert-Preserved
     Assert-MutexGuard $Uninstaller -Uninstall
     $BeforeUninstall = [Convert]::ToBase64String([IO.File]::ReadAllBytes($SettingsPath))
+    $StartupTouched = $true
+    Set-StartupValue ('"' + $Executable + '"')
     dotnet run --no-build --project $UiProject --configuration Release -- --uninstaller $Uninstaller $ScreenshotsDirectory
     if ($LASTEXITCODE -ne 0) { throw 'Native uninstall wizard verification failed.' }
     Assert-Removed
+    if ($null -ne (Get-StartupValue)) { throw 'Uninstall left its own launch-at-login registration.' }
     Assert-Preserved
     if ([Convert]::ToBase64String([IO.File]::ReadAllBytes($SettingsPath)) -cne $BeforeUninstall) { throw 'Uninstall changed saved preference bytes.' }
 
@@ -101,9 +134,12 @@ try {
     if ((Get-ItemProperty $RegistryKey).DisplayVersion -ne $Version) { throw 'Silent installed version mismatch.' }
     if (Get-Process -Name ChiikawaPet -ErrorAction SilentlyContinue) { throw 'Silent installation unexpectedly launched the pet.' }
     Assert-Preserved
+    $PortableStartup = '"' + (Join-Path $Isolation 'portable/ChiikawaPet.exe') + '"'
+    Set-StartupValue $PortableStartup
     $Result = Start-Process -FilePath $Uninstaller -ArgumentList '/S' -Wait -PassThru
     if ($Result.ExitCode -ne 0) { throw 'Silent uninstall compatibility failed.' }
     Assert-Removed
+    if ((Get-StartupValue) -cne $PortableStartup) { throw 'Uninstall removed another portable copy''s launch-at-login registration.' }
     Assert-Preserved
     if ([Convert]::ToBase64String([IO.File]::ReadAllBytes($SettingsPath)) -cne $BeforeUninstall) { throw 'Silent installation/uninstall changed saved preference bytes.' }
     Write-Host "Windows native wizards, finish launch, installed executable, preservation, mutex and /S checks passed. Screenshots: $ScreenshotsDirectory"
@@ -122,14 +158,26 @@ try {
         }
         Assert-Removed
     } finally {
-        if ($null -ne $OriginalSettings) { [IO.File]::WriteAllBytes($SettingsPath, $OriginalSettings) }
-        elseif (Test-Path $SettingsPath) { Remove-Item $SettingsPath -Force }
-        if (Test-Path $SentinelPath) { Remove-Item $SentinelPath -Force }
-        if (-not $SettingsDirectoryExisted -and (Test-Path $SettingsDirectory) -and -not (Get-ChildItem $SettingsDirectory -Force)) {
-            Remove-Item $SettingsDirectory
+        try {
+            if ($StartupTouched) {
+                if ($null -ne $OriginalStartupKind) {
+                    Set-StartupValue $OriginalStartup $OriginalStartupKind
+                } else {
+                    $Run = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($RunSubkey, $true)
+                    try { if ($null -ne $Run) { $Run.DeleteValue($StartupName, $false) } }
+                    finally { if ($null -ne $Run) { $Run.Dispose() } }
+                }
+            }
+        } finally {
+            if ($null -ne $OriginalSettings) { [IO.File]::WriteAllBytes($SettingsPath, $OriginalSettings) }
+            elseif (Test-Path $SettingsPath) { Remove-Item $SettingsPath -Force }
+            if (Test-Path $SentinelPath) { Remove-Item $SentinelPath -Force }
+            if (-not $SettingsDirectoryExisted -and (Test-Path $SettingsDirectory) -and -not (Get-ChildItem $SettingsDirectory -Force)) {
+                Remove-Item $SettingsDirectory
+            }
+            [Environment]::SetEnvironmentVariable('CLAUDE_CONFIG_DIR', $OriginalClaude, 'Process')
+            [Environment]::SetEnvironmentVariable('CODEX_HOME', $OriginalCodex, 'Process')
+            if (Test-Path $Isolation) { Remove-Item $Isolation -Recurse -Force }
         }
-        [Environment]::SetEnvironmentVariable('CLAUDE_CONFIG_DIR', $OriginalClaude, 'Process')
-        [Environment]::SetEnvironmentVariable('CODEX_HOME', $OriginalCodex, 'Process')
-        if (Test-Path $Isolation) { Remove-Item $Isolation -Recurse -Force }
     }
 }

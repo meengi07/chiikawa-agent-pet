@@ -143,5 +143,9 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\Chiikawa Pet\Uninstall.lnk"
   RMDir "$SMPROGRAMS\Chiikawa Pet"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\ChiikawaPet"
+  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "ChiikawaAgentPet"
+  ${If} $0 == '"$INSTDIR\ChiikawaPet.exe"'
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "ChiikawaAgentPet"
+  ${EndIf}
   ; Preferences and CLI credentials are stored elsewhere and are preserved.
 SectionEnd
