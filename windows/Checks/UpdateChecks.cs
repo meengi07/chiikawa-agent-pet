@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 using ChiikawaPet;
 
 internal static class UpdateChecks
@@ -121,6 +123,7 @@ internal static class UpdateChecks
             if (OperatingSystem.IsWindows())
             {
                 CheckMappedExecutableRollback(temporary, Check);
+                CheckDirectoryRelease(temporary, Check);
                 string cache = Path.Combine(temporary, "cache");
                 string abandoned = Path.Combine(cache, Guid.NewGuid().ToString("N"));
                 string live = Path.Combine(cache, Guid.NewGuid().ToString("N"));
@@ -143,6 +146,35 @@ internal static class UpdateChecks
         finally { Directory.Delete(temporary, recursive: true); }
         return checks;
     }
+
+    private static void CheckDirectoryRelease(string temporary, Action<bool, string> check)
+    {
+        string source = Path.Combine(temporary, "held-directory");
+        string destination = Path.Combine(temporary, "released-directory");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "retained.txt"), "original payload");
+        using var held = CreateFileW(source, 0x80, 3, IntPtr.Zero, 3, 0x02000000, IntPtr.Zero);
+        if (held.IsInvalid) throw new IOException("Cannot create the directory-sharing fixture.");
+        Task move = UpdateApply.MoveDirectoryWhenReleased(source, destination);
+        check(!move.IsCompleted && Directory.Exists(source) && !Directory.Exists(destination),
+            "Installed directory replacement waits while Windows retains a directory handle");
+        held.Dispose();
+        move.GetAwaiter().GetResult();
+        check(!Directory.Exists(source) && File.ReadAllText(Path.Combine(destination, "retained.txt")) == "original payload",
+            "Installed directory replacement preserves payload after handle release");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "untouched.txt"), "source payload");
+        bool rejected = false;
+        try { UpdateApply.MoveDirectoryWhenReleased(source, destination).GetAwaiter().GetResult(); }
+        catch (IOException) { rejected = true; }
+        check(rejected && File.ReadAllText(Path.Combine(source, "untouched.txt")) == "source payload"
+            && File.ReadAllText(Path.Combine(destination, "retained.txt")) == "original payload",
+            "Directory replacement never overwrites an existing destination");
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+    private static extern SafeFileHandle CreateFileW(string path, uint access, uint sharing, IntPtr security,
+        uint creation, uint flags, IntPtr template);
 
     private static void CheckMappedExecutableRollback(string temporary, Action<bool, string> check)
     {

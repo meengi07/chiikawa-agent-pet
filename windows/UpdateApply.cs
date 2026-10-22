@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -171,6 +172,27 @@ internal static class UpdateApply
         return session;
     }
 
+    internal static async Task MoveDirectoryWhenReleased(string source, string destination)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Directory.Move(source, destination);
+            return;
+        }
+        long started = Stopwatch.GetTimestamp();
+        while (!MoveFileW(source, destination))
+        {
+            int error = Marshal.GetLastWin32Error();
+            if (error is not (32 or 33) || Stopwatch.GetElapsedTime(started) >= TimeSpan.FromSeconds(5))
+                throw new IOException("Cannot move the app directory: " + new System.ComponentModel.Win32Exception(error).Message,
+                    unchecked((int)(0x80070000U | (uint)error)));
+            await Task.Delay(50);
+        }
+    }
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+    private static extern bool MoveFileW(string source, string destination);
+
     internal static async Task Run(string requestPath)
     {
         string session = SessionDirectory(requestPath);
@@ -225,7 +247,7 @@ internal static class UpdateApply
             ValidateTarget(target, request.CurrentVersion, request.Installed);
             if (request.Installed)
             {
-                Directory.Move(target, backup);
+                await MoveDirectoryWhenReleased(target, backup);
                 moved = true;
                 var start = new ProcessStartInfo(package) { UseShellExecute = false, CreateNoWindow = true };
                 start.ArgumentList.Add("/S");
@@ -259,9 +281,9 @@ internal static class UpdateApply
                     {
                         RejectReparse(target);
                         Directory.Delete(stage);
-                        Directory.Move(target, stage);
+                        await MoveDirectoryWhenReleased(target, stage);
                     }
-                    Directory.Move(backup, target);
+                    await MoveDirectoryWhenReleased(backup, target);
                     Registry.CurrentUser.DeleteSubKeyTree(UninstallKey, throwOnMissingSubKey: false);
                     using var restored = Registry.CurrentUser.CreateSubKey(UninstallKey);
                     foreach (var item in registry) restored.SetValue(item.Name, item.Value, item.Kind);

@@ -13,6 +13,7 @@ GitHub Release. Published platform-specific history below remains unchanged.
 - Add explicit multiple CLI homes, opt-in supported saved-account discovery, Codex Windows Credential Manager reads, explicit Windows-accessible WSL paths, and sanitized diagnostics. Never refresh tokens, switch accounts or write other tools' credentials.
 - Add opt-in streamed Claude/Codex local token history with replay deduplication, safety/incompleteness warnings and local-day periods. Keep totals home-scoped and separate from quota/credits; custom exact-model USD rates are required for cost estimates, with unknown models/tiers left unpriced.
 - Remove only the installed copy's own Windows login-startup entry during uninstall; preserve another portable copy's entry and existing preferences/CLI credentials.
+- Wait up to five seconds for Windows sharing/lock violations during installed directory replacement and rollback. Preserve atomic renames, fail other filesystem errors immediately, and keep real lock-release/destination-preservation regressions.
 
 ## 1.2.1 — 2026-10-21
 
