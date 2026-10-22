@@ -7,6 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Usage.cs" Link="Usage.cs" />
+    <Compile Include="../UsagePolicy.cs" Link="UsagePolicy.cs" />
+    <Compile Include="../UsageCredentials.cs" Link="UsageCredentials.cs" />
+    <Compile Include="../UsageSnapshots.cs" Link="UsageSnapshots.cs" />
+    <Compile Include="../UsageHistory.cs" Link="UsageHistory.cs" />
     <Compile Include="../Language.cs" Link="Language.cs" />
     <Compile Include="../Settings.cs" Link="Settings.cs" />
     <Compile Include="../UpdateProtocol.cs" Link="UpdateProtocol.cs" />

@@ -21,7 +21,7 @@ using Drawing = System.Drawing;
 
 namespace ChiikawaPet;
 
-internal sealed class PetApp : Window
+internal sealed partial class PetApp : Window
 {
     private static readonly (string Id, string Name)[] Characters =
         [("chiikawa", "치이카와"), ("hachiware", "하치와레"), ("usagi", "우사기"), ("momonga", "모몽가")];
@@ -30,13 +30,14 @@ internal sealed class PetApp : Window
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ChiikawaPet", "settings.json");
     private readonly Settings settings;
     private readonly double? preview;
-    private readonly ProviderState[] providers = [new("Claude"), new("Codex")];
+    private ProviderState[] providers = [];
     private readonly Dictionary<string, BitmapSource[]> sprites = new();
     private readonly Image pet = new() { Stretch = Stretch.Uniform };
     private readonly Forms.NotifyIcon tray = new();
     private readonly DispatcherTimer animation = new() { Interval = TimeSpan.FromMilliseconds(140) };
     private readonly DispatcherTimer refreshTimer = new() { Interval = TimeSpan.FromMinutes(2) };
     private readonly DispatcherTimer updateTimer = new() { Interval = TimeSpan.FromHours(6) };
+    private readonly DispatcherTimer presentationTimer = new() { Interval = TimeSpan.FromSeconds(30) };
     private readonly Updates updates = new();
     private CancellationTokenSource? updateCancellation;
     private bool updating;
@@ -51,7 +52,7 @@ internal sealed class PetApp : Window
     private Point dragStart, originalPosition;
     private int frame, direction = -1, trayRow = -1;
     private string trayCharacter = "";
-    private double? Remaining => preview ?? Usage.Minimum(providers);
+    private double? Remaining => preview ?? MoodRemaining();
     private string CharacterName => T(Characters.First(character => character.Id == settings.Character).Name);
 
     [STAThread]
@@ -98,6 +99,7 @@ internal sealed class PetApp : Window
         this.preview = preview;
         settings = Settings.Load(SettingsPath);
         ChiikawaPet.Language.Current = settings.Language;
+        ReloadAccounts();
         bool updateFailed = Environment.GetEnvironmentVariable("CHIIKAWA_UPDATE_FAILED") == "1";
         Environment.SetEnvironmentVariable("CHIIKAWA_UPDATE_FAILED", null);
         if (updateFailed) updateStatus = "업데이트하지 못했습니다. 이전 버전을 복원했습니다.";
@@ -166,13 +168,16 @@ internal sealed class PetApp : Window
         refreshTimer.Tick += async (_, _) => await Refresh();
         updateTimer.Tick += async (_, _) => await CheckForUpdates(automatic: true);
         BuildTrayMenu();
+        presentationTimer.Tick += (_, _) => { UpdatePresentation(); UpdateCards(); };
         tray.MouseClick += (_, mouse) =>
         {
             if (mouse.Button == Forms.MouseButtons.Left) Dispatcher.Invoke(TogglePanel);
         };
+        tray.BalloonTipClicked += (_, _) => Dispatcher.Invoke(OpenPanel);
         UpdatePresentation();
         tray.Visible = true;
         refreshTimer.Start();
+        presentationTimer.Start();
         Dispatcher.BeginInvoke(new Action(async () => await Refresh()));
         if (preview == null && settings.AutomaticUpdates)
         {
@@ -181,6 +186,7 @@ internal sealed class PetApp : Window
         }
         Loaded += (_, _) =>
         {
+            ConfigureSystemFeatures();
             Updates.AcknowledgeStartup();
             if (updateFailed) tray.ShowBalloonTip(5000, T("치이카와 펫"), T(updateStatus), Forms.ToolTipIcon.Warning);
         };
@@ -190,7 +196,10 @@ internal sealed class PetApp : Window
             animation.Stop();
             refreshTimer.Stop();
             updateTimer.Stop();
+            presentationTimer.Stop();
             updateCancellation?.Cancel();
+            CancelHistory();
+            systemFeatures?.Dispose();
             ClosePanel();
             SaveSettings();
             tray.Visible = false;
@@ -258,17 +267,17 @@ internal sealed class PetApp : Window
 
     private void DrawPet()
     {
-        int row = Usage.MoodRow(Remaining);
+        int row = MoodRow();
         int column = row == 4 ? frame / 3 % 8 : frame % 40 >= 38 ? 6 + frame % 2 : frame % 6;
         pet.Source = sprites[settings.Character][row * 8 + column];
-        pet.RenderTransform = new TranslateTransform(0, frame / 8 % 4 == 2 ? -1 : 0);
+        pet.RenderTransform = new TranslateTransform(0, SystemParameters.ClientAreaAnimation && frame / 8 % 4 == 2 ? -1 : 0);
     }
 
     private void Animate()
     {
         frame = (frame + 1) % 120;
         DrawPet();
-        if (!settings.Wanders || mouseDown || panel != null || IsMouseOver
+        if (!SystemParameters.ClientAreaAnimation || !settings.Wanders || mouseDown || panel != null || IsMouseOver
             || petMenu?.IsOpen == true || tray.ContextMenuStrip?.Visible == true) return;
         var cursor = Forms.Control.MousePosition;
         var localCursor = PointFromScreen(new Point(cursor.X, cursor.Y));
@@ -311,28 +320,66 @@ internal sealed class PetApp : Window
     {
         if (refreshing || preview != null || closing) return;
         refreshing = true;
+        quotaMessages.Clear();
         UpdateCards();
         try
         {
             await Task.WhenAll(providers.Select(async provider =>
             {
-                try { provider.Succeed(await Usage.Fetch(provider.Name)); }
-                catch (InvalidOperationException error) { provider.Fail(error.Message); }
+                try
+                {
+                    if (provider.Reading != null)
+                    {
+                        var fingerprint = await Usage.CurrentFingerprint(provider.Account);
+                        if (reloadPending || closing) return;
+                        provider.VerifyFingerprint(fingerprint);
+                    }
+                    if (provider.Reading == null)
+                    {
+                        var cached = await Usage.Cached(provider.Account);
+                        if (reloadPending || closing) return;
+                        if (cached != null) provider.Succeed(cached);
+                    }
+                    if (!closing) UpdateCards();
+                    var reading = await Usage.Fetch(provider.Account);
+                    if (reloadPending || closing) return;
+                    provider.Succeed(reading);
+                    NotifyQuotaChanges(provider);
+                }
+                catch (InvalidOperationException error)
+                {
+                    var fingerprint = await Usage.CurrentFingerprint(provider.Account);
+                    if (reloadPending || closing) return;
+                    provider.VerifyFingerprint(fingerprint);
+                    if (error is UsageIdentityException) provider.Clear();
+                    provider.Fail(error);
+                }
                 if (!closing) { UpdatePresentation(); UpdateCards(); }
             }));
         }
-        finally { refreshing = false; if (!closing) UpdateCards(); }
+        finally
+        {
+            refreshing = false;
+            if (!closing) { UpdatePresentation(); UpdateCards(); ShowQuotaNotifications(); }
+            if (reloadPending && !closing)
+            {
+                reloadPending = false; ReloadAccounts();
+                if (settings.LocalHistoryEnabled) _ = RefreshHistory();
+                await Refresh();
+            }
+        }
     }
 
     private void UpdatePresentation()
     {
         ((Button)Content).ToolTip = T("클릭: 사용량 · 드래그: 이동 · 우클릭: 메뉴");
         Title = T($"{CharacterName} 펫");
-        AutomationProperties.SetName((Button)Content, T($"{CharacterName}, 잔여량 {Usage.Percent(Remaining)}. {Usage.Caption(Remaining)}"));
+        AutomationProperties.SetName((Button)Content, T($"{CharacterName}, 잔여량 {Usage.Percent(Remaining)}. {MoodCaption()}"));
         DrawPet();
-        if (settings.Visible) animation.Start(); else animation.Stop();
-        tray.Text = $"{CharacterName} · Claude {Usage.Percent(providers[0].Remaining)} · Codex {Usage.Percent(providers[1].Remaining)}";
-        int row = Usage.MoodRow(Remaining);
+        if (settings.Visible && SystemParameters.ClientAreaAnimation) animation.Start(); else animation.Stop();
+        tray.Text = TraySummary();
+        if (settings.TrayStyle != "character") { DrawMetricTray(); return; }
+        int row = MoodRow();
         if (trayRow == row && trayCharacter == settings.Character) return;
         trayRow = row;
         trayCharacter = settings.Character;
@@ -439,6 +486,8 @@ internal sealed class PetApp : Window
         menu.Items.Add(automatic);
         var status = new Forms.ToolStripMenuItem(T(updateStatus)) { Enabled = false };
         menu.Items.Add(status);
+        var pinnedUsage = new Forms.ToolStripMenuItem(L("Pinned usage (provider minimum)", "고정한 사용량 (제공자별 최솟값)")) { Name = "pinned-usage" };
+        menu.Items.Add(pinnedUsage);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(T("펫 종료"), null, (_, _) => Dispatcher.Invoke(Quit));
         menu.Opening += (_, _) =>
@@ -448,6 +497,11 @@ internal sealed class PetApp : Window
             automatic.Checked = settings.AutomaticUpdates;
             automatic.Enabled = preview == null;
             status.Text = T(updateStatus);
+            pinnedUsage.DropDownItems.Clear();
+            foreach (string pin in settings.TrayPins)
+                pinnedUsage.DropDownItems.Add(new Forms.ToolStripMenuItem(pin + " · " + Usage.Percent(PinRemaining(pin))) { Enabled = false });
+            if (settings.TrayPins.Length == 0)
+                pinnedUsage.DropDownItems.Add(new Forms.ToolStripMenuItem(L("No pinned metrics", "고정한 한도 없음")) { Enabled = false });
         };
         tray.ContextMenuStrip = menu;
     }
@@ -552,13 +606,15 @@ internal sealed class PetApp : Window
         var screen = WorkArea();
         var body = new StackPanel { Margin = new Thickness(20) };
         body.Children.Add(Text("CHIIKAWA PET", 11));
-        caption = Text(T($"{CharacterName}의 에너지 · {Usage.Caption(Remaining)}"), 20);
+        caption = Text(T($"{CharacterName}의 에너지 · {MoodCaption()}"), 20);
         body.Children.Add(caption);
+        moodReasonText = Text(MoodReason(), 11);
+        body.Children.Add(moodReasonText);
         var choices = new UniformGrid { Columns = 2 };
         foreach (var (id, name) in Characters)
         {
             var content = new StackPanel();
-            var image = new Image { Source = sprites[id][Usage.MoodRow(Remaining) * 8], Width = 64, Height = 80 };
+            var image = new Image { Source = sprites[id][0], Width = 64, Height = 80 };
             RenderOptions.SetBitmapScalingMode(image, BitmapScalingMode.NearestNeighbor);
             content.Children.Add(image);
             content.Children.Add(Text(name));
@@ -590,7 +646,8 @@ internal sealed class PetApp : Window
         if (preview != null) body.Children.Add(Text(T($"표정 미리보기 {Usage.Percent(preview)} · 실제 사용량이 아닙니다")));
         providerCards = new StackPanel();
         body.Children.Add(providerCards);
-        body.Children.Add(Text(T("표정은 정상 조회된 한도 중 가장 낮은 잔여량 기준 · 2분마다 갱신"), 10));
+        body.Children.Add(Text("Only current measurements drive expressions and alerts; updates every 2 minutes.", 10));
+        BuildFeatureControls(body);
         refreshButton = ActionButton(T("사용량 새로고침"), async () => await Refresh());
         body.Children.Add(refreshButton);
         body.Children.Add(ActionButton(T("닫기"), ClosePanel));
@@ -605,9 +662,16 @@ internal sealed class PetApp : Window
         panel.Left = Math.Clamp(Left + Width / 2 - panel.Width / 2, screen.Left, Math.Max(screen.Left, screen.Right - panel.Width));
         panel.Top = Math.Clamp(Top - panel.Height - 8, screen.Top + 12, Math.Max(screen.Top + 12, screen.Bottom - panel.Height - 12));
         panel.Closing += (_, _) => panel = null;
-        panel.Closed += (_, _) => { panel = null; providerCards = null; caption = null; refreshButton = null; };
+        panel.Closed += (_, _) =>
+        {
+            panel = null; providerCards = null; caption = null; refreshButton = null;
+            moodReasonText = null; discoveryWarningText = null; pricingStatusText = null;
+            historyScanButton = null;
+            startupStatusText = null; startupToggle = null;
+        };
         panel.KeyDown += (_, key) => { if (key.Key == Key.Escape) ClosePanel(); };
-        panel.Deactivated += (_, _) => { if (!IsMouseOver) ClosePanel(); };
+        panel.Activated += (_, _) => RefreshStartupRegistration();
+        panel.Deactivated += (_, _) => { if (!featureDialogOpen && !IsMouseOver) ClosePanel(); };
         UpdateCards();
         panel.Show();
         panel.Activate();
@@ -615,28 +679,40 @@ internal sealed class PetApp : Window
 
     private void UpdateCards()
     {
-        if (caption != null) caption.Text = T($"{CharacterName}의 에너지 · {Usage.Caption(Remaining)}");
+        if (caption != null) caption.Text = T($"{CharacterName}의 에너지 · {MoodCaption()}");
+        if (moodReasonText != null) moodReasonText.Text = MoodReason();
+        if (discoveryWarningText != null) discoveryWarningText.Text = string.Join(Environment.NewLine, Usage.DiscoveryWarnings.Select(T));
         if (panel != null) panel.Title = T($"{CharacterName} 사용량");
         if (refreshButton != null) { refreshButton.IsEnabled = !refreshing && preview == null; refreshButton.Content = refreshing ? T("조회 중…") : T("사용량 새로고침"); }
+        if (historyScanButton != null) historyScanButton.IsEnabled = settings.LocalHistoryEnabled && !historyScanning && preview == null;
         if (providerCards == null) return;
         providerCards.Children.Clear();
         foreach (var provider in providers)
         {
             var content = new StackPanel { Margin = new Thickness(12) };
-            content.Children.Add(Text(T($"{provider.Name} · {Usage.Percent(provider.Remaining)} 남음"), 18));
+            content.Children.Add(Text($"{provider.Name} · {provider.Account.Label}", 18));
+            content.Children.Add(Text(CurrentStatus(provider), 11));
             if (provider.Reading is { } reading)
             {
-                foreach (var quota in reading.Windows)
+                foreach (var quota in reading.Windows.Where(quota => !settings.HiddenMetrics.Contains(MetricKey(provider.Name, quota.Id))))
                 {
                     content.Children.Add(Text($"{T(quota.Title)} · {Usage.Percent(quota.Remaining)}"));
                     content.Children.Add(new ProgressBar { Minimum = 0, Maximum = 100, Value = quota.Remaining, Height = 6,
                         Margin = new Thickness(0, 4, 0, 4) });
-                    if (quota.ResetsAt is { } reset) content.Children.Add(Text(T($"{reset.ToLocalTime().ToString("g", CultureInfo.GetCultureInfo(settings.Language == "ko" ? "ko-KR" : "en-US"))} 초기화"), 10));
+                    if (quota.ResetsAt is { } reset) content.Children.Add(Text(ResetDescription(reset), 10));
+                    if (settings.ShowPace && reading.IsCurrent(DateTimeOffset.UtcNow))
+                    {
+                        var projection = UsagePace.Projection(quota, reading.FetchedAt, DateTimeOffset.UtcNow);
+                        if (projection != null) content.Children.Add(Text(ProjectionDescription(projection), 10));
+                    }
                 }
-                content.Children.Add(Text(T($"{reading.FetchedAt.ToLocalTime().ToString("T", CultureInfo.GetCultureInfo(settings.Language == "ko" ? "ko-KR" : "en-US"))} 조회{(provider.Error == null ? "" : " · 이전 데이터")}"), 10));
+                AddReadingDetails(content, provider, reading);
             }
             if (provider.Error != null) content.Children.Add(Text(provider.Error));
             else if (provider.Reading == null) content.Children.Add(Text(preview != null ? T("미리보기 · 조회하지 않습니다") : refreshing ? T("조회 중…") : T("CLI 로그인 정보를 연결합니다.")));
+            if (provider.RetryAt is { } retry) content.Children.Add(Text($"{L("Next attempt", "다음 시도")}: {retry.ToLocalTime():g}", 11));
+            content.Children.Add(Text($"{L("Config home", "설정 경로")}: {provider.Account.Directory}", 10));
+            AddHistoryDetails(content, provider);
             providerCards.Children.Add(new Border { Child = content, Background = Brushes.White,
                 CornerRadius = new CornerRadius(12), Margin = new Thickness(0, 5, 0, 5),
                 Opacity = provider.Error != null && provider.Reading != null ? 0.65 : 1 });

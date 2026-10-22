@@ -13,6 +13,12 @@
   <ItemGroup>
     <Compile Include="../../windows/PetApp.cs" Link="PetApp.cs" />
     <Compile Include="../../windows/Usage.cs" Link="Usage.cs" />
+    <Compile Include="../../windows/PetUsageFeatures.cs" Link="PetUsageFeatures.cs" />
+    <Compile Include="../../windows/UsagePolicy.cs" Link="UsagePolicy.cs" />
+    <Compile Include="../../windows/WindowsFeatures.cs" Link="WindowsFeatures.cs" />
+    <Compile Include="../../windows/UsageCredentials.cs" Link="UsageCredentials.cs" />
+    <Compile Include="../../windows/UsageSnapshots.cs" Link="UsageSnapshots.cs" />
+    <Compile Include="../../windows/UsageHistory.cs" Link="UsageHistory.cs" />
     <Compile Include="../../windows/Language.cs" Link="Language.cs" />
     <Compile Include="../../windows/Settings.cs" Link="Settings.cs" />
     <Compile Include="../../windows/UpdateProtocol.cs" Link="UpdateProtocol.cs" />

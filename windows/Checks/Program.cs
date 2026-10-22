@@ -116,4 +116,8 @@ try {
 } finally { Directory.Delete(Path.GetDirectoryName(languagePath)!, recursive: true); }
 Language.Current = "en";
 checks += UpdateChecks.Run();
+checks += UsageDataChecks.Run();
+checks += UsagePolicyChecks.Run();
+checks += UsageSettingsChecks.Run();
+checks += await UsageHistoryChecks.Run();
 Console.WriteLine($"Windows logic checks passed: {checks}");

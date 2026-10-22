@@ -15,7 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Forms = System.Windows.Forms;
 
-internal static class Program
+internal static partial class Program
 {
     private const string MutexName = "Local\\ChiikawaAgentPet";
     private static readonly string SettingsPath = Path.Combine(
@@ -58,6 +58,7 @@ internal static class Program
             passed = RunScenario("native-panel-close") && passed;
             passed = RunScenario("native-close") && passed;
             passed = RunScenario("relaunch") && passed;
+            passed = RunScenario("features") && passed;
             var previewSettings = ChiikawaPet.Settings.Load(SettingsPath);
             previewSettings.AutomaticUpdates = true;
             previewSettings.Save(SettingsPath);
@@ -117,6 +118,7 @@ internal static class Program
                 Near(window!.Left, saved.RootElement.GetProperty("X").GetDouble(), "Reloaded X");
                 Near(window.Top, saved.RootElement.GetProperty("Y").GetDouble(), "Reloaded Y");
                 if (scenario == "interaction") await CheckInteraction(window);
+                if (scenario == "features") await CheckFeaturePreferences(window);
                 if (scenario == "preview-updates")
                     Require(!((DispatcherTimer)Field("updateTimer").GetValue(window)!).IsEnabled
                         && !(bool)Field("updating").GetValue(window)!

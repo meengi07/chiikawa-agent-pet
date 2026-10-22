@@ -4,3 +4,5 @@ build/
 .swiftpm/
 windows/**/bin/
 windows/**/obj/
+checks/windows-ui/bin/
+checks/windows-ui/obj/
